@@ -1,16 +1,20 @@
+import { AuthProvider } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
 import '../styles/globals.css';
-import { ReactNode } from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <body>
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
-  );
+  )
 }

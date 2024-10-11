@@ -11,7 +11,7 @@ interface UserApplication {
   status: 'pending' | 'approved' | 'rejected';
 }
 
-const AdminReviewList: React.FC = () => {
+const CampaignReviewList: React.FC = () => {
   // Mock data - in a real application, this would come from an API
   const [applications, setApplications] = useState<UserApplication[]>([
     {
@@ -91,4 +91,4 @@ const AdminReviewList: React.FC = () => {
   );
 };
 
-export default AdminReviewList;
+export default CampaignReviewList;

@@ -2,16 +2,21 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '../../../context/AuthContext';
 
 const SignUpCampaignPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    organizationName: '',
-    contactPerson: '',
+    campaignName: '',
+    organizerName: '',
     email: '',
-    phone: '',
-    campaignDescription: '',
+    password: '',
+    confirmPassword: '',
+    description: '',
   });
+  const [error, setError] = useState('');
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -20,31 +25,50 @@ const SignUpCampaignPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Form submitted:', formData);
-    // For now, we'll just redirect to a confirmation page
-    router.push('/signup-confirmation');
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const campaignId = `CAM${uuidv4().substr(0, 6).toUpperCase()}`;
+      const campaignData = {
+        ...formData,
+        id: campaignId,
+        createdBy: user?.id,
+      };
+      // Simulating an API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Campaign created:', campaignData);
+      router.push('/campaign-dashboard');
+    } catch (error) {
+      setError('Failed to create campaign. Please try again.');
+      console.error('Error creating campaign:', error);
+    }
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Sign up to Add Campaign</h1>
+      <h1 className="text-3xl font-bold mb-4">Create a Campaign</h1>
+      {error && <p className="text-error mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          name="organizationName"
-          placeholder="Organization Name"
+          name="campaignName"
+          placeholder="Campaign Name"
           className="input input-bordered w-full"
-          value={formData.organizationName}
+          value={formData.campaignName}
           onChange={handleInputChange}
           required
         />
         <input
           type="text"
-          name="contactPerson"
-          placeholder="Contact Person"
+          name="organizerName"
+          placeholder="Organizer Name"
           className="input input-bordered w-full"
-          value={formData.contactPerson}
+          value={formData.organizerName}
           onChange={handleInputChange}
           required
         />
@@ -58,23 +82,32 @@ const SignUpCampaignPage: React.FC = () => {
           required
         />
         <input
-          type="tel"
-          name="phone"
-          placeholder="Phone"
+          type="password"
+          name="password"
+          placeholder="Password"
           className="input input-bordered w-full"
-          value={formData.phone}
+          value={formData.password}
+          onChange={handleInputChange}
+          required
+        />
+        <input
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          className="input input-bordered w-full"
+          value={formData.confirmPassword}
           onChange={handleInputChange}
           required
         />
         <textarea
-          name="campaignDescription"
+          name="description"
           placeholder="Campaign Description"
           className="textarea textarea-bordered w-full"
-          value={formData.campaignDescription}
+          value={formData.description}
           onChange={handleInputChange}
           required
         ></textarea>
-        <button type="submit" className="btn btn-primary w-full">Submit</button>
+        <button type="submit" className="btn btn-primary w-full">Create Campaign</button>
       </form>
     </div>
   );

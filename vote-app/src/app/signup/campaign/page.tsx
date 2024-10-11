@@ -2,20 +2,21 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../context/AuthContext';
 
 const SignUpCampaignPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    campaignName: '',
-    organizerName: '',
+    organizationName: '',
+    contactPerson: '',
     email: '',
     password: '',
     confirmPassword: '',
-    description: '',
   });
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -29,37 +30,53 @@ const SignUpCampaignPage: React.FC = () => {
       return;
     }
 
-    // Here you would typically send the data to your backend
     try {
-      // Simulating an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Campaign created:', formData);
-      router.push('/campaign-dashboard');
-    } catch (err) {
-      setError('Failed to create campaign. Please try again.');
+      const response = await fetch('/api/signup/campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          userType: 'campaign',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create account');
+      }
+
+      const { user, campaign } = await response.json();
+      console.log('Campaign account created:', user);
+      console.log('Initial campaign created:', campaign);
+      login('campaign');
+      router.push('/campaign');
+    } catch (error) {
+      setError('Failed to create account. Please try again.');
+      console.error('Error creating account:', error);
     }
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Create a Campaign</h1>
+      <h1 className="text-3xl font-bold mb-4">Sign Up as Campaign Organizer</h1>
       {error && <p className="text-error mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          name="campaignName"
-          placeholder="Campaign Name"
+          name="organizationName"
+          placeholder="Organization Name"
           className="input input-bordered w-full"
-          value={formData.campaignName}
+          value={formData.organizationName}
           onChange={handleInputChange}
           required
         />
         <input
           type="text"
-          name="organizerName"
-          placeholder="Organizer Name"
+          name="contactPerson"
+          placeholder="Contact Person"
           className="input input-bordered w-full"
-          value={formData.organizerName}
+          value={formData.contactPerson}
           onChange={handleInputChange}
           required
         />
@@ -90,15 +107,7 @@ const SignUpCampaignPage: React.FC = () => {
           onChange={handleInputChange}
           required
         />
-        <textarea
-          name="description"
-          placeholder="Campaign Description"
-          className="textarea textarea-bordered w-full"
-          value={formData.description}
-          onChange={handleInputChange}
-          required
-        ></textarea>
-        <button type="submit" className="btn btn-primary w-full">Create Campaign</button>
+        <button type="submit" className="btn btn-primary w-full">Sign Up</button>
       </form>
     </div>
   );

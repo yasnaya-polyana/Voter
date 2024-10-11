@@ -1,5 +1,5 @@
 import React from 'react';
-import SignUpToVoteForm from '../../components/SignUpToVoteForm';
+import SignUpToVoteForm from '../../../components/SignUpToVoteForm';
 
 const SignUpToVotePage: React.FC = () => {
   return (
