@@ -2,15 +2,15 @@
 
 Secure, transparent, and decentralized voting powered by blockchain technology.
 
-![Project Screenshot](public/images/frontImage.png)
+![Project Screenshot](vote-app/public/images/frontImage.png)
 
 ## Overview
 
-SmartVote is an innovative voting system built on Ethereum blockchain technology, leveraging the power of smart contracts to ensure secure, transparent, and decentralized voting processes. This application provides a user-friendly interface for participating in blockchain-based voting events.
+SmartVote is an innovative voting system built on near-protocol smart contracts, to ensure secure, transparent, and decentralized voting processes. This application provides a user-friendly interface for participating in blockchain-based voting events.
 
 ## Key Features
 
-- Decentralized voting using Ethereum smart contracts
+- Decentralized voting using near-protocol smart contracts
 - Transparent and immutable vote records
 - Secure voter authentication
 - Real-time vote counting and results
@@ -100,31 +100,6 @@ docker-compose up --build web
 - Tailwind CSS
 - Docker
 - AssemblyScript (Smart Contracts)
-
-## Troubleshooting
-
-### Common Docker Issues
-
-1. Port already in use:
-   ```bash
-   # Find and kill the process using port 3000
-   lsof -i :3000
-   kill -9 <PID>
-   ```
-
-2. File watching not working:
-   - Ensure your docker-compose.yml has the correct volume mappings
-   - Check that WATCHPACK_POLLING=true is set in environment variables
-
-3. Container won't start:
-   ```bash
-   # Remove all containers and volumes
-   docker-compose down -v
-   # Remove all images
-   docker rmi $(docker images -q)
-   # Rebuild
-   docker-compose up --build
-   ```
 
 ## Contributing
 
