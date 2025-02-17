@@ -1,10 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import withAuth from '../../components/withAuth';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
 
 const VoterPage: React.FC = () => {
+  const { isLoggedIn, user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn || user?.userType !== 'voter') {
+      router.push('/login');
+    }
+  }, [isLoggedIn, user, router]);
+
+  if (!isLoggedIn || user?.userType !== 'voter') {
+    return null; // or a loading spinner
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Voter Dashboard</h1>
@@ -27,4 +41,4 @@ const VoterPage: React.FC = () => {
   );
 };
 
-export default withAuth(VoterPage, 'voter');
+export default VoterPage;

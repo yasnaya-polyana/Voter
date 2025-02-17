@@ -42,17 +42,24 @@ const SignUpCampaignPage: React.FC = () => {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to create account');
+        throw new Error(data.error || 'Failed to create account');
       }
 
-      const { user, campaign } = await response.json();
-      console.log('Campaign account created:', user);
-      console.log('Initial campaign created:', campaign);
-      login('campaign');
-      router.push('/campaign');
+      console.log('Campaign account created:', data.user);
+      
+      // Call login function with email and password
+      const loginResult = await login(formData.email, formData.password);
+      
+      if (loginResult.success) {
+        router.push('/campaign');
+      } else {
+        throw new Error(loginResult.error || 'Failed to log in after signup');
+      }
     } catch (error) {
-      setError('Failed to create account. Please try again.');
+      setError(error.message || 'Failed to create account. Please try again.');
       console.error('Error creating account:', error);
     }
   };

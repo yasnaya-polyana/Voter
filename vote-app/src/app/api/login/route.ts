@@ -11,12 +11,26 @@ export async function POST(req: Request) {
 
     const user = await User.findOne({ email });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    return NextResponse.json({ userType: user.userType }, { status: 200 });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        userType: user.userType
+      }
+    }, { status: 200 });
   } catch (error) {
+    console.error('Error in login:', error);
     return NextResponse.json({ error: 'An error occurred during login' }, { status: 500 });
   }
 }

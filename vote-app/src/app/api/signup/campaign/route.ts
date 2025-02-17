@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/mongodb';
 import User from '../../../../models/User';
-import Campaign from '../../../../models/Campaign';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -9,25 +8,26 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { password, organizationName, ...otherData } = body;
+    const { password, organizationName, email, contactPerson } = body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json({ success: false, error: 'Email already exists' }, { status: 400 });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      ...otherData,
+      email,
       password: hashedPassword,
+      userType: 'campaign',
+      organizationName,
+      contactPerson
     });
 
-    const campaign = await Campaign.create({
-      campaignName: `${organizationName}'s First Campaign`,
-      description: 'Welcome to your first campaign!',
-      isPublic: true,
-      createdBy: user._id,
-    });
-
-    return NextResponse.json({ success: true, user, campaign }, { status: 201 });
+    return NextResponse.json({ success: true, user: { id: user._id, email: user.email, userType: user.userType } }, { status: 201 });
   } catch (error) {
     console.error('Error in campaign signup:', error);
-    return NextResponse.json({ success: false, error: 'Failed to create user and campaign' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Failed to create user' }, { status: 500 });
   }
 }

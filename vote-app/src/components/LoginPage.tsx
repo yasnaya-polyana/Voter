@@ -1,3 +1,9 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
+
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,3 +64,5 @@ const LoginPage: React.FC = () => {
     </div>
   );
 };
+
+export default LoginPage;

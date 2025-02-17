@@ -8,7 +8,7 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -16,23 +16,24 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      if (!response.ok) {
-        throw new Error('Invalid email or password');
+      if (result.success) {
+        // Use the updated user state
+        const currentUser = result.user;
+        if (currentUser?.userType === 'voter') {
+          router.push('/voter');
+        } else if (currentUser?.userType === 'campaign') {
+          router.push('/campaign');
+        } else {
+          throw new Error('Invalid user type');
+        }
+      } else {
+        setError(result.error || 'An error occurred during login');
       }
-
-      const data = await response.json();
-      login(data.userType);
-      router.push(data.userType === 'campaign' ? '/campaign' : '/voter');
     } catch (error) {
-      setError('Invalid email or password');
+      setError('An unexpected error occurred');
+      console.error('Login error:', error);
     }
   };
 
@@ -49,6 +50,7 @@ const LoginPage: React.FC = () => {
               className="input input-bordered w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
             <input
               type="password"
@@ -56,6 +58,7 @@ const LoginPage: React.FC = () => {
               className="input input-bordered w-full"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
             <button type="submit" className="btn btn-primary w-full">Login</button>
           </form>

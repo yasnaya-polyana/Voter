@@ -1,128 +1,237 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { v4 as uuidv4 } from 'uuid';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from '../../../context/AuthContext';
+import CandidateForm from '../../../components/CandidateForm';
+
+interface FormData {
+  campaignName: string;
+  description: string;
+  isPublic: boolean;
+  startDate: Date | null;
+  endDate: Date | null;
+}
 
 const NewCampaignPage: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const router = useRouter();
+  const { user } = useAuth();
+  const [stage, setStage] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [campaignId, setCampaignId] = useState<string>('');
+  const [token, setToken] = useState<string>('');
+  const [formData, setFormData] = useState<FormData>({
     campaignName: '',
     description: '',
     isPublic: true,
+    startDate: null,
+    endDate: null
   });
-  const [error, setError] = useState('');
-  const [privateKey, setPrivateKey] = useState('');
-  const router = useRouter();
-  const { user } = useAuth();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
 
-  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, isPublic: e.target.value === 'public' });
-  };
-
-  const generatePrivateKey = () => {
-    return uuidv4().substr(0, 8).toUpperCase();
+  const handleStartNow = () => {
+    setFormData(prev => ({
+      ...prev,
+      startDate: new Date()
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
+    setIsSubmitting(true);
+    
     try {
-      const campaignId = `CAM${uuidv4().substr(0, 6).toUpperCase()}`;
-      const newPrivateKey = formData.isPublic ? '' : generatePrivateKey();
-      const campaignData = {
-        ...formData,
-        id: campaignId,
-        createdBy: user?.id,
-        privateKey: newPrivateKey,
-      };
+      // First, validate the form data
+      if (!formData.campaignName || !formData.description || !formData.startDate || !formData.endDate) {
+        throw new Error('Please fill in all required fields');
+      }
 
       const response = await fetch('/api/campaigns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(campaignData),
+        body: JSON.stringify({
+          ...formData,
+          createdBy: user?.email || 'anonymous',
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create campaign');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create campaign');
       }
 
-      const result = await response.json();
-      console.log('Campaign created:', result);
+      const data = await response.json();
+      console.log('Campaign created:', data);
 
-      if (!formData.isPublic) {
-        setPrivateKey(newPrivateKey);
+      if (data.success) {
+        // Store the campaign ID and token from the response
+        setCampaignId(data.campaign.id);
+        setToken(data.campaign.token || '');
+        setStage(2); // Move to candidate stage
+      } else {
+        throw new Error('Invalid response from server');
       }
-      router.push('/campaign');
+
     } catch (error) {
-      setError('Failed to create campaign. Please try again.');
       console.error('Error creating campaign:', error);
+      alert('Failed to create campaign: ' + (error as Error).message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Create a New Campaign</h1>
-      {error && <p className="text-error mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
+  const handleCandidatesSubmitted = () => {
+    // After candidates are added, redirect to the keys page
+    router.push(`/campaign/keys/${token}`);
+  };
+
+  const renderStage1 = () => (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Campaign Name</span>
+        </label>
         <input
           type="text"
-          name="campaignName"
-          placeholder="Campaign Name"
-          className="input input-bordered w-full"
+          className="input input-bordered"
           value={formData.campaignName}
-          onChange={handleInputChange}
+          onChange={(e) => setFormData({ ...formData, campaignName: e.target.value })}
           required
         />
+      </div>
+
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Description</span>
+        </label>
         <textarea
-          name="description"
-          placeholder="Campaign Description"
-          className="textarea textarea-bordered w-full"
+          className="textarea textarea-bordered"
           value={formData.description}
-          onChange={handleInputChange}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           required
-        ></textarea>
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="campaignType"
-              value="public"
-              checked={formData.isPublic}
-              onChange={handleRadioChange}
-              className="radio radio-primary"
-            />
-            <span className="ml-2">Public Campaign</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="campaignType"
-              value="private"
-              checked={!formData.isPublic}
-              onChange={handleRadioChange}
-              className="radio radio-primary"
-            />
-            <span className="ml-2">Private Campaign</span>
-          </label>
+        />
+      </div>
+
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Campaign Type</span>
+        </label>
+        <div className="join w-full">
+          <button
+            type="button"
+            className={`join-item btn flex-1 ${formData.isPublic ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setFormData({ ...formData, isPublic: true })}
+          >
+            Public
+          </button>
+          <button
+            type="button"
+            className={`join-item btn flex-1 ${!formData.isPublic ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setFormData({ ...formData, isPublic: false })}
+          >
+            Private
+          </button>
         </div>
-        <button type="submit" className="btn btn-primary w-full">Create Campaign</button>
-      </form>
-      {privateKey && (
-        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-          <h2 className="text-xl font-bold mb-2">Private Campaign Key</h2>
-          <p>Your private campaign key is: <strong>{privateKey}</strong></p>
-          <p className="mt-2 text-sm text-gray-600">
-            Please save this key. Voters will need it to access your private campaign.
-          </p>
+        <label className="label">
+          <span className="label-text-alt text-gray-500">
+            {formData.isPublic 
+              ? "Anyone with the public key can vote"
+              : "Only users with both public and private keys can vote"
+            }
+          </span>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Start Date</span>
+          </label>
+          <div className="flex gap-2">
+            <DatePicker
+              selected={formData.startDate}
+              onChange={(date) => setFormData({ ...formData, startDate: date })}
+              showTimeSelect
+              dateFormat="MMMM d, yyyy h:mm aa"
+              className="input input-bordered w-full"
+              placeholderText="Select start date"
+              required
+            />
+            <button
+              type="button"
+              onClick={handleStartNow}
+              className="btn btn-sm btn-outline"
+            >
+              Now
+            </button>
+          </div>
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">End Date</span>
+          </label>
+          <DatePicker
+            selected={formData.endDate}
+            onChange={(date) => setFormData({ ...formData, endDate: date })}
+            showTimeSelect
+            dateFormat="MMMM d, yyyy h:mm aa"
+            className="input input-bordered w-full"
+            placeholderText="Select end date"
+            required
+          />
+        </div>
+      </div>
+
+      <button 
+        type="submit" 
+        className="btn btn-primary w-full" 
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <span className="loading loading-spinner"></span>
+            Processing...
+          </>
+        ) : (
+          'Next'
+        )}
+      </button>
+    </form>
+  );
+
+  return (
+    <div className="container mx-auto p-4 max-w-3xl">
+      <div className="text-sm breadcrumbs mb-6">
+        <ul>
+          <li className={stage >= 1 ? "text-primary" : ""}>Campaign Details</li>
+          <li className={stage >= 2 ? "text-primary" : ""}>Add Candidates</li>
+        </ul>
+      </div>
+
+      {stage === 1 && renderStage1()}
+
+      {stage === 2 && campaignId && (
+        <div>
+          <h2 className="text-xl font-bold mb-4">Add Candidates</h2>
+          <CandidateForm
+            campaignId={campaignId}
+            onSubmitted={handleCandidatesSubmitted}
+            onError={(error: string) => {
+              console.error('Error adding candidates:', error);
+              alert(error);
+            }}
+          />
         </div>
       )}
     </div>

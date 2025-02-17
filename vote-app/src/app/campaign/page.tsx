@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import CampaignIDManager from '../../components/CampaignIDManager';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 const CampaignPage: React.FC = () => {
     return (
@@ -28,4 +29,10 @@ const CampaignPage: React.FC = () => {
     );
   };
 
-export default CampaignPage;
+const ProtectedCampaignPage = () => (
+  <ProtectedRoute allowedUserTypes={['campaign']}>
+    <CampaignPage />
+  </ProtectedRoute>
+);
+
+export default ProtectedCampaignPage;
