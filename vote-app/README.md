@@ -16,44 +16,115 @@ SmartVote is an innovative voting system built on Ethereum blockchain technology
 - Real-time vote counting and results
 - Customizable voting parameters for different scenarios
 
-## How It Works
-
-SmartVote utilizes Ethereum smart contracts to create a trustless voting environment. Each vote is recorded as a transaction on the Ethereum blockchain, ensuring transparency and preventing tampering. Our system allows for various voting mechanisms, from simple yes/no decisions to more complex multi-candidate elections.
-
 ## Getting Started
 
-1. Clone the repository
-2. Install dependencies:
+### Using Docker (Recommended)
+
+1. Install Docker and Docker Compose on your machine
+   - [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+   - [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+   - [Docker Engine for Linux](https://docs.docker.com/engine/install/)
+
+2. Clone the repository
+   ```bash
+   git clone https://github.com/yasnaya-polyana/vote-app.git
+   cd vote-app
    ```
-   npm install
-   ```
-3. Set up environment variables:
-   Create a `.env` file in the root directory and add:
+
+3. Create a `.env` file in the root directory:
    ```
    POSTGRES_URL=your_postgres_connection_string
+   NEXT_PUBLIC_NEAR_NETWORK=testnet
+   NEXT_PUBLIC_NEAR_CONTRACT_NAME=your_contract_name.testnet
    ```
-4. Run the development server:
+
+4. Start the application in development mode:
+   ```bash
+   docker-compose up --build
    ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Development Commands
+
+```bash
+# Start the application
+docker-compose up
+
+# Rebuild and start
+docker-compose up --build
+
+# Stop the application
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Rebuild specific service
+docker-compose up --build web
+```
+
+### Without Docker (Alternative)
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Run the development server:
+   ```bash
    npm run dev
    ```
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Project Structure
 
 - `/app`: Contains the main application code
   - `/components`: Reusable React components
   - `/context`: React context for state management
+  - `/lib`: Utility functions and configurations
+  - `/api`: API route handlers
+
+- `/contract-as`: Smart contract code
+  - `/assembly`: AssemblyScript contract source
+  - `/build`: Compiled contract files
 
 - `/public`: Static assets
 
 ## Technologies Used
 
-- Next.js
-- React
+- Next.js 14
+- React 18
 - TypeScript
 - PostgreSQL
 - Ethereum (Web3.js)
 - Tailwind CSS
+- Docker
+- AssemblyScript (Smart Contracts)
+
+## Troubleshooting
+
+### Common Docker Issues
+
+1. Port already in use:
+   ```bash
+   # Find and kill the process using port 3000
+   lsof -i :3000
+   kill -9 <PID>
+   ```
+
+2. File watching not working:
+   - Ensure your docker-compose.yml has the correct volume mappings
+   - Check that WATCHPACK_POLLING=true is set in environment variables
+
+3. Container won't start:
+   ```bash
+   # Remove all containers and volumes
+   docker-compose down -v
+   # Remove all images
+   docker rmi $(docker images -q)
+   # Rebuild
+   docker-compose up --build
+   ```
 
 ## Contributing
 

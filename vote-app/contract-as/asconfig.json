@@ -1,0 +1,14 @@
+{
+  "extends": "near-sdk-as/asconfig.json",
+  "targets": {
+    "release": {
+      "outFile": "build/release/vote-contract.wasm",
+      "textFile": "build/release/vote-contract.wat",
+      "sourceMap": true,
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "converge": false,
+      "noAssert": false
+    }
+  }
+} 

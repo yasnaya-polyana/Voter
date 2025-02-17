@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNear } from '../context/NearContext';
+import { getContract } from '../lib/near-contract';
 
 interface VoteInterfaceProps {
   campaignId: string;
@@ -26,14 +27,12 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({ campaignId, candidates })
 
     setLoading(true);
     try {
-      await wallet.account().functionCall({
-        contractId: process.env.NEXT_PUBLIC_CONTRACT_NAME,
-        methodName: 'cast_vote',
-        args: {
-          campaign_id: campaignId,
-          candidate_id: selectedCandidate,
-        },
-        gas: '300000000000000',
+      const contract = getContract(wallet.account());
+      await contract.cast_vote({
+        campaign_id: campaignId,
+        candidate_id: selectedCandidate,
+        public_key: publicKey,
+        private_key: privateKey // Only for private campaigns
       });
 
       alert('Vote cast successfully!');

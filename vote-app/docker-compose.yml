@@ -1,0 +1,31 @@
+version: '3'
+services:
+  web:
+    platform: linux/amd64
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_NEAR_NETWORK=testnet
+      - NEXT_PUBLIC_NEAR_CONTRACT_NAME=yasn.testnet
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  contract:
+    platform: linux/amd64
+    build: 
+      context: ./contract-as
+      dockerfile: Dockerfile.contract
+    volumes:
+      - ./contract-as:/app
+      - /app/node_modules
+      - /app/build 
