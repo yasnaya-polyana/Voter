@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -17,19 +17,15 @@ const LoginPage: React.FC = () => {
 
     try {
       const result = await login(email, password);
-
-      if (result.success) {
-        // Use the updated user state
-        const currentUser = result.user;
-        if (currentUser?.userType === 'voter') {
+      if (result.success && result.user) {
+        // Redirect based on user type
+        if (result.user.userType === 'voter') {
           router.push('/voter');
-        } else if (currentUser?.userType === 'campaign') {
+        } else if (result.user.userType === 'campaign') {
           router.push('/campaign');
-        } else {
-          throw new Error('Invalid user type');
         }
       } else {
-        setError(result.error || 'An error occurred during login');
+        setError(result.error || 'Invalid credentials');
       }
     } catch (error) {
       setError('An unexpected error occurred');
@@ -38,29 +34,39 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-base-200">
+    <div className="flex items-center justify-center min-h-screen bg-base-200">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Login to Voter App</h2>
-          {error && <p className="text-error">{error}</p>}
+          <h2 className="card-title">Login to Vote App</h2>
+          {error && (
+            <div className="alert alert-error">
+              <span>{error}</span>
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              className="input input-bordered w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="input input-bordered w-full"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button type="submit" className="btn btn-primary w-full">Login</button>
+            <div className="form-control">
+              <input
+                type="email"
+                placeholder="Email"
+                className="input input-bordered w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-control">
+              <input
+                type="password"
+                placeholder="Password"
+                className="input input-bordered w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary w-full">
+              Login
+            </button>
           </form>
         </div>
       </div>

@@ -3,16 +3,23 @@
 import React, { useState } from 'react';
 import { useNear } from '../context/NearContext';
 import { getContract } from '../lib/near-contract';
+import { utils } from 'near-api-js';
 
 interface VoteInterfaceProps {
   campaignId: string;
   candidates: Array<{ id: string; name: string }>;
+  isPrivate?: boolean;
 }
 
-const VoteInterface: React.FC<VoteInterfaceProps> = ({ campaignId, candidates }) => {
+const VoteInterface: React.FC<VoteInterfaceProps> = ({ 
+  campaignId, 
+  candidates, 
+  isPrivate
+}) => {
   const { wallet, isSignedIn, signIn } = useNear();
   const [selectedCandidate, setSelectedCandidate] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [privateKey, setPrivateKey] = useState('');
 
   const handleVote = async () => {
     if (!isSignedIn) {
@@ -28,61 +35,66 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({ campaignId, candidates })
     setLoading(true);
     try {
       const contract = getContract(wallet.account());
-      await contract.cast_vote({
+      
+      // Prepare vote arguments
+      const voteArgs = {
         campaign_id: campaignId,
         candidate_id: selectedCandidate,
-        public_key: publicKey,
-        private_key: privateKey // Only for private campaigns
-      });
+        ...(isPrivate && { private_key: privateKey })
+      };
 
+      // Call the contract method with appropriate gas
+      const VOTE_GAS = '50000000000000'; // 50 TGas
+      const result = await contract.cast_vote(
+        voteArgs,
+        VOTE_GAS,
+        utils.format.parseNearAmount('0.001') // Small deposit for storage
+      );
+
+      console.log('Vote transaction result:', result);
       alert('Vote cast successfully!');
-    } catch (error) {
+      setSelectedCandidate('');
+      setPrivateKey('');
+    } catch (error: any) {
       console.error('Error casting vote:', error);
-      alert('Failed to cast vote. Please try again.');
+      alert(error.message || 'Failed to cast vote. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {!isSignedIn ? (
-        <button onClick={signIn} className="btn btn-primary w-full">
-          Connect NEAR Wallet to Vote
-        </button>
-      ) : (
-        <>
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Cast Your Vote</h2>
-              <div className="space-y-4">
-                {candidates.map((candidate) => (
-                  <div key={candidate.id} className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">{candidate.name}</span>
-                      <input
-                        type="radio"
-                        name="candidate"
-                        className="radio"
-                        checked={selectedCandidate === candidate.id}
-                        onChange={() => setSelectedCandidate(candidate.id)}
-                        disabled={loading}
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={handleVote}
-                className={`btn btn-primary w-full ${loading ? 'loading' : ''}`}
-                disabled={!selectedCandidate || loading}
-              >
-                {loading ? 'Confirming...' : 'Cast Vote'}
-              </button>
-            </div>
-          </div>
-        </>
+    <div className="space-y-4">
+      <select
+        value={selectedCandidate}
+        onChange={(e) => setSelectedCandidate(e.target.value)}
+        className="select select-bordered w-full"
+      >
+        <option value="">Select a candidate</option>
+        {candidates.map((candidate) => (
+          <option key={candidate.id} value={candidate.id}>
+            {candidate.name}
+          </option>
+        ))}
+      </select>
+
+      {isPrivate && (
+        <input
+          type="password"
+          placeholder="Enter your private key"
+          value={privateKey}
+          onChange={(e) => setPrivateKey(e.target.value)}
+          className="input input-bordered w-full"
+        />
       )}
+
+      <button
+        onClick={handleVote}
+        disabled={loading || !selectedCandidate || (isPrivate && !privateKey)}
+        className="btn btn-primary w-full"
+      >
+        {loading ? 'Casting Vote...' : 'Cast Vote'}
+      </button>
     </div>
   );
 };
