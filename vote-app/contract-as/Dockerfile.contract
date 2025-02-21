@@ -3,22 +3,12 @@ FROM --platform=linux/amd64 node:16-slim
 WORKDIR /app
 
 # Install required packages
-RUN apt-get update && apt-get install -y python3 make g++
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-minimal \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create necessary directories
-RUN mkdir -p assembly build/release
-
-COPY package*.json ./
-COPY .npmrc ./
-
-# Install dependencies without optional packages
-RUN npm install --no-optional --legacy-peer-deps
-
-# Copy source files
-COPY assembly ./assembly
-COPY asconfig.json ./
-
-# Build the contract
-RUN npm run build
-
-CMD ["npm", "run", "build"] 
+# Install dependencies and build
+CMD ["sh", "-c", "npm install && npm run build"]

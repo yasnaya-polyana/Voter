@@ -3,15 +3,18 @@
   "version": "1.0.0",
   "description": "NEAR voting contract",
   "scripts": {
-    "build": "mkdir -p build/release && asc assembly/index.ts --target release --binaryFile build/release/vote-contract.wasm --use abort=",
-    "test": "asp --nologo"
+    "build": "asb --target release",
+    "test": "asp --nologo",
+    "build:docker": "docker build -f Dockerfile.contract -t vote-contract . && docker run --rm -v ${PWD}:/app vote-contract",
+    "clean": "rm -rf ./build && mkdir -p build/release"
   },
   "dependencies": {
-    "near-sdk-as": "2.2.4"
+    "near-sdk-as": "3.2.3"
   },
   "devDependencies": {
-    "assemblyscript": "0.17.14",
-    "@assemblyscript/loader": "0.17.14"
+    "@assemblyscript/loader": "0.19.23",
+    "assemblyscript": "0.19.23",
+    "as-bignum": "0.2.23"
   },
   "engines": {
     "node": ">=12.0.0"
