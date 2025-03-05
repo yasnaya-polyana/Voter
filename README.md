@@ -95,11 +95,11 @@ docker-compose up --build web
 - Next.js 14
 - React 18
 - TypeScript
-- PostgreSQL
-- Ethereum (Web3.js)
+- MongoDB
+- NEAR Protocol (Web3.js)
 - Tailwind CSS
 - Docker
-- AssemblyScript (Smart Contracts)
+- Javascript (Smart Contracts)
 
 ## Contributing
 
