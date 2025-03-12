@@ -6,6 +6,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from '../../../context/AuthContext';
 import CandidateForm from '../../../components/CandidateForm';
+import { useNear } from '../../../context/NearContext';
 
 interface FormData {
   campaignName: string;
@@ -18,6 +19,7 @@ interface FormData {
 const NewCampaignPage: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { wallet, isSignedIn } = useNear();
   const [stage, setStage] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [campaignId, setCampaignId] = useState<string>('');
@@ -29,6 +31,7 @@ const NewCampaignPage: React.FC = () => {
     startDate: null,
     endDate: null
   });
+  const [error, setError] = useState<string | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -47,6 +50,7 @@ const NewCampaignPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
     try {
       // First, validate the form data
@@ -77,14 +81,20 @@ const NewCampaignPage: React.FC = () => {
         // Store the campaign ID and token from the response
         setCampaignId(data.campaign.id);
         setToken(data.campaign.token || '');
-        setStage(2); // Move to candidate stage
-      } else {
-        throw new Error('Invalid response from server');
+        
+        // Move to candidate stage regardless of blockchain status
+        setStage(2);
+        
+        // Check if blockchain creation is needed and user is signed in
+        // This will happen in parallel while user adds candidates
+        if (data.campaign.needsBlockchainCreation && wallet && isSignedIn) {
+          console.log('Will create campaign on blockchain with ID:', data.campaign.blockchainId);
+          // We'll handle the actual blockchain creation after candidates are added
+        }
       }
-
     } catch (error) {
       console.error('Error creating campaign:', error);
-      alert('Failed to create campaign: ' + (error as Error).message);
+      setError(error.message || 'Failed to create campaign');
     } finally {
       setIsSubmitting(false);
     }

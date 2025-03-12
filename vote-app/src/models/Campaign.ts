@@ -1,18 +1,33 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 // First, clear any existing models to prevent OverwriteModelError
 mongoose.models = {};
 
-const CandidateSchema = new mongoose.Schema({
+const CandidateSchema = new Schema({
   name: {
     type: String,
     required: true,
   },
   description: String,
   imageUrl: String,
+  voteCount: {
+    type: Number,
+    default: 0
+  }
 });
 
-const CampaignSchema = new mongoose.Schema({
+const AnnouncementSchema = new Schema({
+  content: {
+    type: String,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const CampaignSchema = new Schema({
   campaignName: {
     type: String,
     required: true,
@@ -48,7 +63,7 @@ const CampaignSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'active', 'ended'],
+    enum: ['draft', 'active', 'ended', 'upcoming'],
     default: 'draft',
   },
   createdBy: {
@@ -56,19 +71,13 @@ const CampaignSchema = new mongoose.Schema({
     required: true,
   },
   candidates: [CandidateSchema],
-  announcements: [{
-    content: {
-      type: String,
-      required: true
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  announcements: [AnnouncementSchema],
   totalVotes: {
     type: Number,
     default: 0,
+  },
+  blockchainId: {
+    type: String
   },
 }, {
   timestamps: true,

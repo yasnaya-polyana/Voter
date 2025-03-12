@@ -13,8 +13,9 @@
   },
   "devDependencies": {
     "@assemblyscript/loader": "0.19.23",
+    "as-bignum": "0.2.23",
     "assemblyscript": "0.19.23",
-    "as-bignum": "0.2.23"
+    "eslint": "^9.22.0"
   },
   "engines": {
     "node": ">=12.0.0"

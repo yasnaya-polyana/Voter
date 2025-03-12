@@ -5,7 +5,7 @@ export const nearConfig = {
   nodeUrl: process.env.NEXT_PUBLIC_NEAR_NODE_URL || 'https://rpc.testnet.near.org',
   walletUrl: process.env.NEXT_PUBLIC_NEAR_WALLET_URL || 'https://testnet.mynearwallet.com',
   helperUrl: process.env.NEXT_PUBLIC_NEAR_HELPER_URL || 'https://helper.testnet.near.org',
-  contractName: process.env.NEXT_PUBLIC_NEAR_CONTRACT_NAME || 'yasn88.testnet',
+  contractName: process.env.NEXT_PUBLIC_NEAR_CONTRACT_NAME || 'yasn.testnet',
   explorerUrl: 'https://explorer.testnet.near.org',
   GAS: '300000000000000', // 300 TGas
   attachedDeposit: '0' // Amount of NEAR to attach (if needed)

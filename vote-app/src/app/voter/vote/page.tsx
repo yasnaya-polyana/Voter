@@ -3,6 +3,11 @@
 
 import React, { useState, useEffect } from 'react';
 import CountdownTimer from '../../../components/CountdownTimer';
+import VoteInterface from '../../../components/VoteInterface';
+import { useNear } from '../../../context/NearContext';
+import { useRouter } from 'next/navigation';
+import { getContract } from '../../../lib/near-contract';
+import { utils } from 'near-api-js';
 
 interface Campaign {
   id: string;
@@ -35,6 +40,8 @@ const VotePage: React.FC = () => {
   const [votingInProgress, setVotingInProgress] = useState(false);
   const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const router = useRouter();
+  const { wallet, isSignedIn } = useNear();
 
   const handlePublicKeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,12 +139,38 @@ const VotePage: React.FC = () => {
   };
 
   const handleVote = async (candidateId: string) => {
-    if (!campaign) return;
-    
+    if (!campaign) {
+      console.error('No campaign selected');
+      return;
+    }
+
+    if (!isSignedIn) {
+      console.log('User not signed in, redirecting...');
+      router.push('/login');
+      return;
+    }
+
     setVotingInProgress(true);
     setError('');
 
     try {
+      console.log('Vote parameters:', {
+        campaignId: campaign.id,
+        candidateId,
+        publicKey
+      });
+
+      // Get the contract instance
+      const contract = getContract(wallet.account());
+
+      // Call the contract method directly with properly formatted arguments
+      await contract.cast_vote({
+        campaign_id: campaign.id,
+        candidate_id: candidateId,
+        public_key: publicKey.trim().toUpperCase()
+      }, '300000000000000', '1000000000000000000000');
+
+      // After successful blockchain transaction, update database
       const response = await fetch(`/api/campaigns/${campaign.id}/vote`, {
         method: 'POST',
         headers: {
@@ -151,21 +184,13 @@ const VotePage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to submit vote');
+        throw new Error('Failed to record vote in database');
       }
 
-      // Show success message
-      alert('Vote submitted successfully!');
-      
-      // Redirect to results page or clear the form
-      setCampaign(null);
-      setCandidates([]);
-      setPublicKey('');
-      setPrivateKey('');
-      setShowPrivateKeyForm(false);
-
-    } catch (error) {
+      // Redirect to history page
+      router.push('/voter/history');
+    } catch (error: any) {
+      console.error('Error in voting process:', error);
       setError(error.message || 'Failed to submit vote');
     } finally {
       setVotingInProgress(false);
@@ -201,7 +226,7 @@ const VotePage: React.FC = () => {
             </label>
             <input
               type="text"
-              placeholder="Enter public key (e.g., 13A9A8ED)"
+              placeholder="Enter public key (e.g., 57291826)"
               className="input input-bordered font-mono"
               value={publicKey}
               onChange={(e) => setPublicKey(e.target.value.toUpperCase())}
@@ -210,7 +235,7 @@ const VotePage: React.FC = () => {
               required
             />
             <label className="label">
-              <span className="label-text-alt">Key must be 8 characters long, using only A-F and 0-9</span>
+              <span className="label-text-alt"> Your public key is 8 characters long number. If you have a private key, please enter your public key first.</span>
             </label>
           </div>
           <button 
@@ -316,20 +341,17 @@ const VotePage: React.FC = () => {
                 <div key={candidate._id} className="card bg-base-100 shadow-xl">
                   <div className="card-body">
                     <h3 className="card-title">{candidate.name}</h3>
-                    <p className="whitespace-pre-wrap">{candidate.description}</p>
-                    <div className="card-actions justify-end mt-4">
-                      <button 
+                    <p>{candidate.description}</p>
+                    <div className="card-actions justify-end">
+                      <button
                         className="btn btn-primary"
                         onClick={() => handleVote(candidate._id)}
-                        disabled={votingInProgress}
+                        disabled={votingInProgress || !isSignedIn}
                       >
                         {votingInProgress ? (
-                          <>
-                            <span className="loading loading-spinner"></span>
-                            Voting...
-                          </>
+                          <span className="loading loading-spinner"></span>
                         ) : (
-                          'Vote'
+                          'Vote on Blockchain'
                         )}
                       </button>
                     </div>

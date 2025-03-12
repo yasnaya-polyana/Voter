@@ -1,8 +1,9 @@
 @nearBindgen
 export class Vote {
   constructor(
-    public voter: string,
-    public candidate: string,
-    public timestamp: u64
+    public campaign_id: string,
+    public candidate_id: string,
+    public public_key: string,
+    public voter: string
   ) {}
 }

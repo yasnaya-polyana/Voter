@@ -4,6 +4,7 @@ import { useNear } from '@/context/NearContext';
 import { getCampaign } from '@/lib/near-contract';
 import { useEffect, useState } from 'react';
 
+
 interface Campaign {
   id: string;
   title: string;

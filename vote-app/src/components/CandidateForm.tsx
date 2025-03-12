@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useNear } from '@/context/NearContext';
+
 
 interface CandidateFormProps {
   campaignId: string;
@@ -11,6 +13,7 @@ interface CandidateFormProps {
 
 const CandidateForm: React.FC<CandidateFormProps> = ({ campaignId, onSubmitted, onError }) => {
   const router = useRouter();
+  const { wallet, isSignedIn } = useNear();
   const [candidates, setCandidates] = useState([{ name: '', description: '' }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,6 +41,10 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ campaignId, onSubmitted, 
     setIsSubmitting(true);
     
     try {
+      console.log('Starting candidate submission process...');
+      
+      // First save candidates to MongoDB
+      console.log('Saving candidates to MongoDB for campaign:', campaignId);
       const response = await fetch(`/api/campaigns/${campaignId}/candidates`, {
         method: 'POST',
         headers: {
@@ -46,13 +53,107 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ campaignId, onSubmitted, 
         body: JSON.stringify({ candidates }),
       });
 
-      if (!response.ok) throw new Error('Failed to add candidates');
+      if (!response.ok) {
+        console.error('Failed to save candidates to MongoDB:', response.status);
+        throw new Error('Failed to add candidates');
+      }
+      
+      console.log('Candidates saved to MongoDB successfully');
+      
+      // Now get the campaign details including blockchainId
+      console.log('Fetching campaign details to get blockchainId...');
+      const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+      if (!campaignResponse.ok) {
+        console.error('Failed to fetch campaign details:', campaignResponse.status);
+        throw new Error('Failed to fetch campaign details');
+      }
+      
+      const campaignData = await campaignResponse.json();
+      console.log('Campaign data retrieved:', campaignData);
+      
+      // Check if we have what we need for blockchain creation
+      console.log('Checking blockchain prerequisites:');
+      console.log('- blockchainId:', campaignData.blockchainId);
+      console.log('- wallet available:', !!wallet);
+      console.log('- isSignedIn:', isSignedIn);
+      
+      // Create campaign on blockchain if needed
+      if (campaignData.blockchainId && wallet && isSignedIn) {
+        try {
+          console.log('🔗 BLOCKCHAIN: Creating campaign on blockchain with ID:', campaignData.blockchainId);
+          
+          // Extract candidate names
+          const candidateNames = candidates.map(c => c.name);
+          console.log('🔗 BLOCKCHAIN: Candidate names:', candidateNames);
+          
+          // Create on blockchain with detailed logging
+          const args = {
+            campaign_id: campaignData.blockchainId,
+            title: campaignData.campaignName,
+            description: campaignData.description || '',
+            candidates: candidateNames,
+            start_date: new Date(campaignData.startDate).getTime().toString(),
+            end_date: new Date(campaignData.endDate).getTime().toString(),
+            is_public: campaignData.isPublic
+          };
+          
+          console.log('🔗 BLOCKCHAIN: Calling contract with args:', JSON.stringify(args, null, 2));
+          
+          // Add transaction details logging
+          const result = await wallet.account().functionCall({
+            contractId: 'yasn.testnet',
+            methodName: 'create_campaign',
+            args: args,
+            gas: '300000000000000',
+            attachedDeposit: '0'
+          });
+          
+          console.log('🔗 BLOCKCHAIN: Transaction successful!');
+          console.log('🔗 BLOCKCHAIN: Transaction hash:', result.transaction.hash);
+          console.log('🔗 BLOCKCHAIN: Gas used:', result.transaction_outcome.outcome.gas_burnt);
+          
+          // Verify the campaign was created by calling a view method
+          try {
+            const contract = getContract(wallet.account());
+            // Use the correct view method name from your contract
+            const campaignData = await contract.get_campaigns();
+            console.log('🔗 BLOCKCHAIN: Verification - All campaigns:', campaignData);
+          } catch (verifyError) {
+            console.error('🔗 BLOCKCHAIN: Verification failed:', verifyError);
+            console.error('🔗 BLOCKCHAIN: This may indicate the campaign was not created or the view method is incorrect');
+          }
+        } catch (blockchainError) {
+          console.error('❌ BLOCKCHAIN ERROR:', blockchainError);
+          
+          // Extract more detailed error information
+          let errorDetails = 'Unknown error';
+          if (blockchainError.message) {
+            errorDetails = blockchainError.message;
+          }
+          
+          // Check for specific error types
+          if (errorDetails.includes('MethodNotFound')) {
+            console.error('❌ BLOCKCHAIN ERROR: The method "create_campaign" does not exist in the contract');
+          } else if (errorDetails.includes('GasExceeded')) {
+            console.error('❌ BLOCKCHAIN ERROR: Not enough gas provided for the transaction');
+          } else if (errorDetails.includes('NotEnoughBalance')) {
+            console.error('❌ BLOCKCHAIN ERROR: Not enough NEAR balance to complete the transaction');
+          }
+          
+          // Continue anyway since we've created the MongoDB record
+          console.warn('⚠️ BLOCKCHAIN WARNING: Campaign created in MongoDB but blockchain creation failed');
+        }
+      } else {
+        console.warn('Skipping blockchain creation due to missing prerequisites');
+      }
 
       // Call the onSubmitted callback to trigger the redirect
+      console.log('Calling onSubmitted to complete the process');
       onSubmitted();
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error in candidate submission process:', err);
       onError('Failed to save candidates');
+    } finally {
       setIsSubmitting(false);
     }
   };
