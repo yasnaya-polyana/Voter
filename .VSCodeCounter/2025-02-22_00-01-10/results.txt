@@ -1,0 +1,216 @@
+Date : 2025-02-22 00:01:10
+Directory : /Users/oladmin/Desktop/CS-Y3/Voter/vote-app
+Total : 106 files,  25205 codes, 138 comments, 763 blanks, all 26106 lines
+
+Languages
++-------------------------+------------+------------+------------+------------+------------+
+| language                | files      | code       | comment    | blank      | total      |
++-------------------------+------------+------------+------------+------------+------------+
+| WebAssembly Text Format |          2 |     11,431 |          0 |          1 |     11,432 |
+| JSON                    |          6 |      8,499 |          0 |          4 |      8,503 |
+| TypeScript JSX          |         53 |      3,904 |         74 |        501 |      4,479 |
+| TypeScript              |         37 |      1,269 |         54 |        243 |      1,566 |
+| YAML                    |          1 |         31 |          0 |          1 |         32 |
+| JSON with Comments      |          1 |         26 |          0 |          1 |         27 |
+| JavaScript              |          3 |         20 |          2 |          4 |         26 |
+| Ignore                  |          1 |         12 |          0 |          0 |         12 |
+| Docker                  |          1 |         10 |          8 |          7 |         25 |
+| PostCSS                 |          1 |          3 |          0 |          1 |          4 |
++-------------------------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                          | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                             |        106 |     25,205 |        138 |        763 |     26,106 |
+| . (Files)                                                                                     |         11 |      8,574 |         10 |         18 |      8,602 |
+| contract-as                                                                                   |          8 |     11,573 |          0 |         22 |     11,595 |
+| contract-as (Files)                                                                           |          3 |         41 |          0 |          1 |         42 |
+| contract-as/assembly                                                                          |          3 |        101 |          0 |         20 |        121 |
+| contract-as/assembly (Files)                                                                  |          2 |         87 |          0 |         18 |        105 |
+| contract-as/assembly/__tests__                                                                |          1 |         14 |          0 |          2 |         16 |
+| contract-as/build                                                                             |          2 |     11,431 |          0 |          1 |     11,432 |
+| contract-as/build/release                                                                     |          2 |     11,431 |          0 |          1 |     11,432 |
+| src                                                                                           |         87 |      5,058 |        128 |        723 |      5,909 |
+| src/app                                                                                       |         47 |      3,304 |         76 |        468 |      3,848 |
+| src/app (Files)                                                                               |          5 |        133 |          4 |         16 |        153 |
+| src/app/admin                                                                                 |          1 |         76 |          0 |          9 |         85 |
+| src/app/api                                                                                   |         20 |        888 |         44 |        174 |      1,106 |
+| src/app/api (Files)                                                                           |          1 |         20 |          0 |          4 |         24 |
+| src/app/api/campaigns                                                                         |         11 |        605 |         35 |        110 |        750 |
+| src/app/api/campaigns (Files)                                                                 |          1 |         83 |          8 |         19 |        110 |
+| src/app/api/campaigns/[id]                                                                    |          6 |        394 |         19 |         69 |        482 |
+| src/app/api/campaigns/[id] (Files)                                                            |          1 |         86 |          1 |         14 |        101 |
+| src/app/api/campaigns/[id]/announcements                                                      |          1 |         45 |          0 |          6 |         51 |
+| src/app/api/campaigns/[id]/candidates                                                         |          1 |         75 |          3 |         17 |         95 |
+| src/app/api/campaigns/[id]/keys                                                               |          1 |         34 |          1 |          5 |         40 |
+| src/app/api/campaigns/[id]/verify                                                             |          1 |         74 |          6 |         13 |         93 |
+| src/app/api/campaigns/[id]/vote                                                               |          1 |         80 |          8 |         14 |        102 |
+| src/app/api/campaigns/access                                                                  |          1 |         42 |          5 |          8 |         55 |
+| src/app/api/campaigns/active                                                                  |          1 |         26 |          0 |          4 |         30 |
+| src/app/api/campaigns/active/[userId]                                                         |          1 |         26 |          0 |          4 |         30 |
+| src/app/api/campaigns/keys                                                                    |          1 |         32 |          2 |          5 |         39 |
+| src/app/api/campaigns/keys/[token]                                                            |          1 |         32 |          2 |          5 |         39 |
+| src/app/api/campaigns/user                                                                    |          1 |         28 |          1 |          5 |         34 |
+| src/app/api/campaigns/user/[userId]                                                           |          1 |         28 |          1 |          5 |         34 |
+| src/app/api/candidates                                                                        |          1 |         49 |          2 |         10 |         61 |
+| src/app/api/keys                                                                              |          1 |         45 |          2 |          8 |         55 |
+| src/app/api/login                                                                             |          1 |         29 |          0 |          8 |         37 |
+| src/app/api/signup                                                                            |          2 |         53 |          0 |         14 |         67 |
+| src/app/api/signup/campaign                                                                   |          1 |         27 |          0 |          7 |         34 |
+| src/app/api/signup/voter                                                                      |          1 |         26 |          0 |          7 |         33 |
+| src/app/api/users                                                                             |          1 |         19 |          0 |          6 |         25 |
+| src/app/api/voter                                                                             |          1 |         50 |          5 |          9 |         64 |
+| src/app/api/voter/voted-campaigns                                                             |          1 |         50 |          5 |          9 |         64 |
+| src/app/api/votes                                                                             |          1 |         18 |          0 |          5 |         23 |
+| src/app/api/votes/[id]                                                                        |          1 |         18 |          0 |          5 |         23 |
+| src/app/campaign                                                                              |         10 |      1,204 |         20 |        140 |      1,364 |
+| src/app/campaign (Files)                                                                      |          1 |         34 |          0 |          5 |         39 |
+| src/app/campaign/[id]                                                                         |          3 |        498 |         12 |         55 |        565 |
+| src/app/campaign/[id] (Files)                                                                 |          1 |         89 |          0 |         10 |         99 |
+| src/app/campaign/[id]/manage                                                                  |          1 |        306 |         10 |         30 |        346 |
+| src/app/campaign/[id]/view                                                                    |          1 |        103 |          2 |         15 |        120 |
+| src/app/campaign/active                                                                       |          1 |        159 |          0 |         20 |        179 |
+| src/app/campaign/keys                                                                         |          1 |        146 |          1 |         18 |        165 |
+| src/app/campaign/keys/[token]                                                                 |          1 |        146 |          1 |         18 |        165 |
+| src/app/campaign/manage-voters                                                                |          1 |         18 |          0 |          2 |         20 |
+| src/app/campaign/new                                                                          |          1 |        214 |          4 |         24 |        242 |
+| src/app/campaign/past                                                                         |          1 |        126 |          2 |         15 |        143 |
+| src/app/campaign/results                                                                      |          1 |          9 |          1 |          1 |         11 |
+| src/app/dashboard                                                                             |          1 |         83 |          0 |          8 |         91 |
+| src/app/information                                                                           |          1 |         12 |          0 |          4 |         16 |
+| src/app/login                                                                                 |          1 |         70 |          1 |          7 |         78 |
+| src/app/signup                                                                                |          3 |        120 |          1 |         17 |        138 |
+| src/app/signup/admin                                                                          |          1 |          0 |          0 |          1 |          1 |
+| src/app/signup/campaign                                                                       |          1 |        109 |          1 |         14 |        124 |
+| src/app/signup/voter                                                                          |          1 |         11 |          0 |          2 |         13 |
+| src/app/voter                                                                                 |          5 |        718 |          6 |         93 |        817 |
+| src/app/voter (Files)                                                                         |          1 |         38 |          0 |          7 |         45 |
+| src/app/voter/history                                                                         |          2 |        204 |          1 |         31 |        236 |
+| src/app/voter/history (Files)                                                                 |          1 |         87 |          1 |         17 |        105 |
+| src/app/voter/history/[id]                                                                    |          1 |        117 |          0 |         14 |        131 |
+| src/app/voter/results                                                                         |          1 |        140 |          0 |         18 |        158 |
+| src/app/voter/vote                                                                            |          1 |        336 |          5 |         37 |        378 |
+| src/components                                                                                |         24 |      1,354 |         37 |        181 |      1,572 |
+| src/context                                                                                   |          2 |        134 |          5 |         26 |        165 |
+| src/hooks                                                                                     |          1 |          0 |          0 |          1 |          1 |
+| src/lib                                                                                       |          4 |        125 |          3 |         26 |        154 |
+| src/models                                                                                    |          3 |        130 |          7 |         15 |        152 |
+| src/services                                                                                  |          2 |          0 |          0 |          2 |          2 |
+| src/styles                                                                                    |          1 |          3 |          0 |          1 |          4 |
+| src/types                                                                                     |          1 |          0 |          0 |          1 |          1 |
+| src/utils                                                                                     |          2 |          8 |          0 |          2 |         10 |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+
+| filename                                                                                      | language                | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/.dockerignore                                     | Ignore                  |         12 |          0 |          0 |         12 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/.eslintrc.json                                    | JSON                    |         11 |          0 |          1 |         12 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/Dockerfile                                        | Docker                  |         10 |          8 |          7 |         25 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/components.json                                   | JSON                    |         20 |          0 |          0 |         20 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/as-pect.config.js                     | JavaScript              |          1 |          0 |          0 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/asconfig.json                         | JSON                    |         14 |          0 |          0 |         14 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/assembly/__tests__/index.spec.ts      | TypeScript              |         14 |          0 |          2 |         16 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/assembly/index.ts                     | TypeScript              |         79 |          0 |         17 |         96 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/assembly/model.ts                     | TypeScript              |          8 |          0 |          1 |          9 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/build/release/vote-contract.wasm      | WebAssembly Text Format |        324 |          0 |          0 |        324 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/build/release/vote-contract.wat       | WebAssembly Text Format |     11,107 |          0 |          1 |     11,108 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/contract-as/package.json                          | JSON                    |         26 |          0 |          1 |         27 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/docker-compose.yml                                | YAML                    |         31 |          0 |          1 |         32 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/next.config.js                                    | JavaScript              |         13 |          1 |          2 |         16 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/package-lock.json                                 | JSON                    |      8,377 |          0 |          1 |      8,378 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/package.json                                      | JSON                    |         51 |          0 |          1 |         52 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/postcss.config.mjs                                | JavaScript              |          6 |          1 |          2 |          9 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/admin/page.tsx                            | TypeScript JSX          |         76 |          0 |          9 |         85 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns.ts                          | TypeScript              |         20 |          0 |          4 |         24 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/announcements/route.ts | TypeScript              |         45 |          0 |          6 |         51 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/candidates/route.ts    | TypeScript              |         75 |          3 |         17 |         95 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/keys/route.ts          | TypeScript              |         34 |          1 |          5 |         40 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/route.ts               | TypeScript              |         86 |          1 |         14 |        101 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/verify/route.ts        | TypeScript              |         74 |          6 |         13 |         93 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/[id]/vote/route.ts          | TypeScript              |         80 |          8 |         14 |        102 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/access/route.ts             | TypeScript              |         42 |          5 |          8 |         55 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/active/[userId]/route.ts    | TypeScript              |         26 |          0 |          4 |         30 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/keys/[token]/route.ts       | TypeScript              |         32 |          2 |          5 |         39 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/route.ts                    | TypeScript              |         83 |          8 |         19 |        110 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/campaigns/user/[userId]/route.ts      | TypeScript              |         28 |          1 |          5 |         34 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/candidates/route.ts                   | TypeScript              |         49 |          2 |         10 |         61 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/keys/route.ts                         | TypeScript              |         45 |          2 |          8 |         55 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/login/route.ts                        | TypeScript              |         29 |          0 |          8 |         37 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/signup/campaign/route.ts              | TypeScript              |         27 |          0 |          7 |         34 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/signup/voter/route.ts                 | TypeScript              |         26 |          0 |          7 |         33 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/users/route.ts                        | TypeScript              |         19 |          0 |          6 |         25 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/voter/voted-campaigns/route.ts        | TypeScript              |         50 |          5 |          9 |         64 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/api/votes/[id]/route.ts                   | TypeScript              |         18 |          0 |          5 |         23 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/[id]/manage/page.tsx             | TypeScript JSX          |        306 |         10 |         30 |        346 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/[id]/page.tsx                    | TypeScript JSX          |         89 |          0 |         10 |         99 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/[id]/view/page.tsx               | TypeScript JSX          |        103 |          2 |         15 |        120 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/active/page.tsx                  | TypeScript JSX          |        159 |          0 |         20 |        179 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/keys/[token]/page.tsx            | TypeScript JSX          |        146 |          1 |         18 |        165 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/manage-voters/page.tsx           | TypeScript JSX          |         18 |          0 |          2 |         20 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/new/page.tsx                     | TypeScript JSX          |        214 |          4 |         24 |        242 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/page.tsx                         | TypeScript JSX          |         34 |          0 |          5 |         39 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/past/page.tsx                    | TypeScript JSX          |        126 |          2 |         15 |        143 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/campaign/results/page.tsx                 | TypeScript JSX          |          9 |          1 |          1 |         11 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/dashboard/page.tsx                        | TypeScript JSX          |         83 |          0 |          8 |         91 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/error.tsx                                 | TypeScript JSX          |         26 |          0 |          3 |         29 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/information/page.tsx                      | TypeScript JSX          |         12 |          0 |          4 |         16 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/layout.tsx                                | TypeScript JSX          |         28 |          0 |          3 |         31 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/loading.tsx                               | TypeScript JSX          |          9 |          0 |          0 |          9 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/login/page.tsx                            | TypeScript JSX          |         70 |          1 |          7 |         78 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/not-found.tsx                             | TypeScript JSX          |         15 |          0 |          2 |         17 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/page.tsx                                  | TypeScript JSX          |         55 |          4 |          8 |         67 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/signup/admin/page.tsx                     | TypeScript JSX          |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/signup/campaign/page.tsx                  | TypeScript JSX          |        109 |          1 |         14 |        124 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/signup/voter/page.tsx                     | TypeScript JSX          |         11 |          0 |          2 |         13 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/voter/history/[id]/page.tsx               | TypeScript JSX          |        117 |          0 |         14 |        131 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/voter/history/page.tsx                    | TypeScript JSX          |         87 |          1 |         17 |        105 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/voter/page.tsx                            | TypeScript JSX          |         38 |          0 |          7 |         45 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/voter/results/page.tsx                    | TypeScript JSX          |        140 |          0 |         18 |        158 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/app/voter/vote/page.tsx                       | TypeScript JSX          |        336 |          5 |         37 |        378 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/AddressStep.tsx                    | TypeScript JSX          |         33 |          0 |          4 |         37 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/CampaignIDManager.tsx              | TypeScript JSX          |        112 |          0 |         14 |        126 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/CampaignReviewList.tsx             | TypeScript JSX          |         86 |          2 |          7 |         95 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/CandidateCard.tsx                  | TypeScript JSX          |         10 |          0 |          3 |         13 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/CandidateForm.tsx                  | TypeScript JSX          |        119 |          1 |         18 |        138 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/ClientProviders.tsx                | TypeScript JSX          |         11 |          0 |          4 |         15 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/CountdownTimer.tsx                 | TypeScript JSX          |         64 |          0 |         10 |         74 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/FAQAccordion.tsx                   | TypeScript JSX          |         53 |          0 |          7 |         60 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/Footer.tsx                         | TypeScript JSX          |          8 |          1 |          2 |         11 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/Header.tsx                         | TypeScript JSX          |         20 |          1 |          2 |         23 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/KeyGeneration.tsx                  | TypeScript JSX          |        134 |         10 |         19 |        163 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/LoginPage.tsx                      | TypeScript JSX          |         60 |          0 |          9 |         69 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/Navbar.tsx                         | TypeScript JSX          |         73 |          5 |         10 |         88 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/NearAuthGuard.tsx                  | TypeScript JSX          |         23 |          2 |          5 |         30 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/ProgressBar.tsx                    | TypeScript JSX          |          8 |          0 |          2 |         10 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/ProtectedRoute.tsx                 | TypeScript JSX          |         43 |          4 |          9 |         56 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/Providers.tsx                      | TypeScript JSX          |          6 |          0 |          2 |          8 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/SignUpCampaignPage.tsx             | TypeScript JSX          |        107 |          1 |          8 |        116 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/SignUpToVoteForm.tsx               | TypeScript JSX          |        139 |          2 |          7 |        148 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/SignUpToVotePage.tsx               | TypeScript JSX          |         81 |          2 |          8 |         91 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/UnauthorizedPage.tsx               | TypeScript JSX          |         11 |          0 |          3 |         14 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/VoteInterface.tsx                  | TypeScript JSX          |        110 |          3 |         18 |        131 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/WalletButton.tsx                   | TypeScript JSX          |         26 |          0 |          4 |         30 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/components/withAuth.tsx                       | TypeScript JSX          |         17 |          3 |          6 |         26 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/context/AuthContext.tsx                       | TypeScript JSX          |         66 |          2 |         13 |         81 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/context/NearContext.tsx                       | TypeScript JSX          |         68 |          3 |         13 |         84 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/hooks/useAuth.ts                              | TypeScript              |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/lib/mongodb.ts                                | TypeScript              |         30 |          0 |         11 |         41 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/lib/near-config.ts                            | TypeScript              |         46 |          3 |          6 |         55 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/lib/near-contract.ts                          | TypeScript              |         44 |          0 |          7 |         51 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/lib/utils.ts                                  | TypeScript              |          5 |          0 |          2 |          7 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/models/Campaign.ts                            | TypeScript              |         87 |          7 |          8 |        102 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/models/User.ts                                | TypeScript              |         16 |          0 |          5 |         21 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/models/Vote.ts                                | TypeScript              |         27 |          0 |          2 |         29 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/services/api.ts                               | TypeScript              |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/services/authService.ts                       | TypeScript              |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/styles/globals.css                            | PostCSS                 |          3 |          0 |          1 |          4 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/types/index.d.ts                              | TypeScript              |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/utils/campaignStatus.ts                       | TypeScript              |          8 |          0 |          1 |          9 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/src/utils/helpers.ts                              | TypeScript              |          0 |          0 |          1 |          1 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/tailwind.config.ts                                | TypeScript              |         17 |          0 |          2 |         19 |
+| /Users/oladmin/Desktop/CS-Y3/Voter/vote-app/tsconfig.json                                     | JSON with Comments      |         26 |          0 |          1 |         27 |
+| Total                                                                                         |                         |     25,205 |        138 |        763 |     26,106 |
++-----------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+

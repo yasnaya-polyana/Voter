@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '../../../../../lib/mongodb';
-import Campaign from '../../../../../models/Campaign';
+import dbConnect from '@/lib/mongodb';
+import Campaign from '@/models/Campaign';
 import mongoose from 'mongoose';
-import crypto from 'crypto';
-
-function hashPrivateKey(key: string): string {
-  return crypto.createHash('sha256').update(key).digest('hex');
-}
+import { getContract } from '@/lib/near-contract';
+import { connect, keyStores, WalletConnection } from 'near-api-js';
+import { nearConfig } from '@/lib/near-config';
 
 export async function POST(
   request: Request,
@@ -23,6 +21,7 @@ export async function POST(
     }
 
     const { candidateId, publicKey, privateKey } = await request.json();
+    console.log('Vote request received:', { candidateId, hasPrivateKey: !!privateKey });
 
     // Find the campaign
     const campaign = await Campaign.findById(params.id);
@@ -59,9 +58,8 @@ export async function POST(
         );
       }
       
-      // Hash the provided private key and compare with stored hash
-      const hashedPrivateKey = hashPrivateKey(privateKey);
-      if (campaign.privateKey !== hashedPrivateKey) {
+      if (campaign.privateKey?.toLowerCase() !== privateKey.toLowerCase()) {
+        console.log('Private key mismatch');
         return NextResponse.json(
           { error: 'Invalid private key' },
           { status: 400 }
@@ -69,7 +67,7 @@ export async function POST(
       }
     }
 
-    // Find and update the candidate's vote count
+    // Find the candidate
     const candidate = campaign.candidates.id(candidateId);
     if (!candidate) {
       return NextResponse.json(
@@ -78,21 +76,73 @@ export async function POST(
       );
     }
 
-    // Increment vote count
+    // Check if blockchain ID exists
+    if (!campaign.blockchainId) {
+      console.error('Campaign has no blockchain ID:', campaign._id);
+      return NextResponse.json(
+        { error: 'Campaign not properly configured for blockchain' },
+        { status: 500 }
+      );
+    }
+
+    // Now interact with the blockchain
+    try {
+      // Initialize connection to NEAR
+      const keyStore = new keyStores.InMemoryKeyStore();
+      const near = await connect({
+        keyStore,
+        ...nearConfig,
+        headers: {}
+      });
+      
+      // Use a service account to cast the vote
+      // In production, this should be the user's own account
+      const serviceAccount = await near.account('yasn.testnet');
+      
+      console.log('Casting vote on blockchain with args:', {
+        campaign_id: campaign.blockchainId,
+        candidate_id: candidateId,
+        public_key: publicKey
+      });
+      
+      // Cast the vote on the blockchain
+      await serviceAccount.functionCall({
+        contractId: 'yasn.testnet',
+        methodName: 'cast_vote',
+        args: {
+          campaign_id: campaign.blockchainId,
+          candidate_id: candidateId,
+          public_key: publicKey
+        },
+        gas: '300000000000000',
+        attachedDeposit: '0'
+      });
+      
+      console.log('Vote cast on blockchain successfully');
+    } catch (blockchainError) {
+      console.error('Error casting vote on blockchain:', blockchainError);
+      // You might want to continue even if blockchain vote fails
+      // Or return an error depending on your requirements
+    }
+
+    // Increment vote count in MongoDB
     candidate.voteCount = (candidate.voteCount || 0) + 1;
     campaign.totalVotes = (campaign.totalVotes || 0) + 1;
     
     await campaign.save();
 
+    // Return success response
     return NextResponse.json({
       success: true,
-      message: 'Vote recorded successfully'
+      message: 'Vote recorded successfully',
+      voteCount: candidate.voteCount,
+      totalVotes: campaign.totalVotes
     });
 
-  } catch (error) {
-    console.error('Error recording vote:', error);
+  } catch (error: any) {
+    console.error('Error processing vote:', error);
     return NextResponse.json(
-      { error: 'Failed to record vote' },
+      { error: error.message || 'Failed to process vote' },
       { status: 500 }
     );
   }

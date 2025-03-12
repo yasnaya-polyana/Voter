@@ -41,13 +41,13 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
     const getSuccessUrl = () => {
       if (!user) return `${window.location.origin}/login`;
       return user.userType === 'voter' 
-        ? `${window.location.origin}/voter`
+        ? `${window.location.origin}/voter/history`
         : `${window.location.origin}/campaign`;
     };
 
     // Redirects to NEAR wallet to request full access
     wallet.requestSignIn({
-      contractId: nearConfig.contractName,
+      contractId: process.env.NEXT_PUBLIC_NEAR_CONTRACT_NAME,
       methodNames: ['create_campaign', 'cast_vote', 'get_campaign_results'],
       successUrl: getSuccessUrl(),
       failureUrl: `${window.location.origin}/login`,

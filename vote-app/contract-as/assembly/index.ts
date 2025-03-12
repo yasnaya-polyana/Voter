@@ -4,6 +4,8 @@ import { context, storage, PersistentMap, logging } from "near-sdk-as";
 class Campaign {
   constructor(
     public id: string,
+    public title: string,
+    public description: string,
     public candidates: string[],
     public startDate: u64,
     public endDate: u64,
@@ -14,83 +16,160 @@ class Campaign {
 @nearBindgen
 class Vote {
   constructor(
-    public campaignId: string,
-    public candidateId: string,
-    public voter: string
+    public campaign_id: string,
+    public candidate_id: string,
+    public voter: string,
+    public timestamp: u64
   ) {}
 }
 
+// Storage collections
 const campaigns = new PersistentMap<string, Campaign>("c");
-const votes = new PersistentMap<string, Array<Vote>>("v");
-const voters = new PersistentMap<string, Array<string>>("r");
+const votes = new PersistentMap<string, Vote[]>("v");
+const voterHistory = new PersistentMap<string, string[]>("vh");
 
+// Create a new campaign
 export function create_campaign(
   campaign_id: string,
+  title: string,
+  description: string,
   candidates: string[],
-  start_date: u64,
-  end_date: u64,
+  start_date: string,
+  end_date: string,
   is_public: boolean
-): void {
-  assert(!campaigns.contains(campaign_id), "Campaign ID already exists");
-  
+): boolean {
+  // Check if campaign already exists
+  if (campaigns.contains(campaign_id)) {
+    logging.log("Campaign already exists");
+    return false;
+  }
+
+  // Convert string dates to u64 using a different approach
+  const startDateU64 = u64(parseInt(start_date, 10));
+  const endDateU64 = u64(parseInt(end_date, 10));
+
+  // Create new campaign
   const campaign = new Campaign(
     campaign_id,
+    title,
+    description,
     candidates,
-    start_date,
-    end_date,
+    startDateU64,
+    endDateU64,
     is_public
   );
-  
+
+  // Save campaign
   campaigns.set(campaign_id, campaign);
-  votes.set(campaign_id, new Array<Vote>());
-  voters.set(campaign_id, new Array<string>());
+  logging.log("Campaign created: " + campaign_id);
+  return true;
 }
 
+// Cast a vote
 export function cast_vote(
   campaign_id: string,
   candidate_id: string,
   public_key: string
-): void {
-  assert(campaigns.contains(campaign_id), "Campaign not found");
-  
-  const campaign = campaigns.getSome(campaign_id);
-  const current_time: u64 = context.blockTimestamp;
-  assert(campaign.startDate <= current_time, "Voting has not started");
-  assert(campaign.endDate >= current_time, "Voting has ended");
-  
-  const voter = context.sender;
-  const voterList = voters.contains(campaign_id) 
-    ? voters.getSome(campaign_id) 
-    : new Array<string>();
-    
-  assert(!voterList.includes(voter), "Already voted in this campaign");
-  
-  const vote = new Vote(campaign_id, candidate_id, voter);
-  const campaignVotes = votes.contains(campaign_id)
-    ? votes.getSome(campaign_id)
-    : new Array<Vote>();
-  
+): boolean {
+  // Check if campaign exists
+  if (!campaigns.contains(campaign_id)) {
+    logging.log("Campaign not found");
+    return false;
+  }
+
+  // Get campaign
+  const campaign = campaigns.get(campaign_id)!;
+
+  // Check if candidate exists
+  let candidateExists = false;
+  for (let i = 0; i < campaign.candidates.length; i++) {
+    if (campaign.candidates[i] == candidate_id) {
+      candidateExists = true;
+      break;
+    }
+  }
+
+  if (!candidateExists) {
+    logging.log("Candidate not found");
+    return false;
+  }
+
+  // Create vote
+  const vote = new Vote(
+    campaign_id,
+    candidate_id,
+    context.sender,
+    context.blockTimestamp
+  );
+
+  // Get existing votes for this campaign
+  let campaignVotes: Vote[] = [];
+  if (votes.contains(campaign_id)) {
+    campaignVotes = votes.get(campaign_id)!;
+  }
+
+  // Add vote
   campaignVotes.push(vote);
   votes.set(campaign_id, campaignVotes);
-  
-  voterList.push(voter);
-  voters.set(campaign_id, voterList);
+
+  // Update voter history
+  let history: string[] = [];
+  if (voterHistory.contains(context.sender)) {
+    history = voterHistory.get(context.sender)!;
+  }
+  history.push(campaign_id);
+  voterHistory.set(context.sender, history);
+
+  logging.log("Vote cast for campaign: " + campaign_id);
+  return true;
 }
 
+// Get campaign details
+export function get_campaign(campaign_id: string): Campaign | null {
+  if (!campaigns.contains(campaign_id)) {
+    return null;
+  }
+  return campaigns.get(campaign_id);
+}
+
+// Get all campaigns
+export function get_campaigns(): string[] {
+  // This is a simplified implementation
+  // In a real contract, you would need pagination
+  const result: string[] = [];
+  // We can't iterate over PersistentMap directly
+  // This is just a placeholder
+  return result;
+}
+
+// Get campaign results
 export function get_campaign_results(campaign_id: string): Map<string, i32> {
-  assert(campaigns.contains(campaign_id), "Campaign not found");
-  
   const results = new Map<string, i32>();
-  if (!votes.contains(campaign_id)) {
+  
+  if (!campaigns.contains(campaign_id)) {
+    logging.log("Campaign not found");
     return results;
   }
   
-  const campaignVotes = votes.getSome(campaign_id);
+  if (!votes.contains(campaign_id)) {
+    return results; // No votes yet
+  }
+  
+  const campaignVotes = votes.get(campaign_id)!;
+  
   for (let i = 0; i < campaignVotes.length; i++) {
-    const candidateId = campaignVotes[i].candidateId;
-    const currentVotes = results.has(candidateId) ? results.get(candidateId) : 0;
-    results.set(candidateId, currentVotes + 1);
+    const vote = campaignVotes[i];
+    const count = results.has(vote.candidate_id) ? results.get(vote.candidate_id) + 1 : 1;
+    results.set(vote.candidate_id, count);
   }
   
   return results;
+}
+
+// Get voter history
+export function get_voter_history(voter_id: string): string[] {
+  if (!voterHistory.contains(voter_id)) {
+    return [];
+  }
+  return voterHistory.get(voter_id)!;
 } 

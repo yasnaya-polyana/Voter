@@ -3,6 +3,8 @@ import dbConnect from '../../../lib/mongodb';
 import Campaign from '../../../models/Campaign';
 import { getServerSession } from 'next-auth';
 import crypto from 'crypto';
+import { connect, keyStores, KeyPair } from 'near-api-js';
+import { nearConfig } from '../../../lib/near-config';
 // 18471272
 // d07dd0c99f2d1ed519ddf59444126aff50a09ff8baba7929d86191cf2017a006
 
@@ -21,36 +23,58 @@ function hashPrivateKey(key: string): string {
   return crypto.createHash('sha256').update(key).digest('hex');
 }
 
+function generateBlockchainId(): string {
+  // Generate a simple ID for the blockchain (timestamp + random string)
+  return `campaign_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+}
+
 export async function POST(request: Request) {
   try {
     await dbConnect();
 
     const data = await request.json();
     const publicKey = generatePublicKey();
-    
-    // Generate private key for private campaigns
     const privateKey = !data.isPublic ? generatePrivateKey() : undefined;
+    
+    // Generate a blockchain ID
+    const blockchainId = generateBlockchainId();
+    
+    console.log('Creating campaign with blockchain ID:', blockchainId);
 
-    // Debug log
-    console.log('Creating campaign:', {
-      isPublic: data.isPublic,
-      hasPrivateKey: !!privateKey,
-    });
-
-    // Create campaign - store the private key directly for private campaigns
+    // Create campaign in MongoDB
     const campaign = await Campaign.create({
       ...data,
       publicKey,
-      privateKey, // Store the private key directly, not hashed
-      status: 'draft'
+      privateKey,
+      status: 'draft',
+      blockchainId
     });
 
-    // Debug log
-    console.log('Campaign created:', {
-      id: campaign._id,
-      isPublic: campaign.isPublic,
-      hasStoredPrivateKey: !!campaign.privateKey
-    });
+    // Now create the campaign on the blockchain
+    try {
+      // For server-side operations, we need to use a different approach
+      // since we can't use the user's wallet directly
+      
+      // This is just a flag to indicate blockchain creation is needed
+      // The actual blockchain creation will happen from the frontend
+      console.log('Campaign created in MongoDB. Blockchain creation will be handled by frontend.');
+      
+      return NextResponse.json({
+        success: true,
+        campaign: {
+          id: campaign._id,
+          token: campaign._id,
+          publicKey,
+          privateKey,
+          status: 'draft',
+          blockchainId,
+          needsBlockchainCreation: true // Flag to indicate blockchain creation is needed
+        }
+      });
+    } catch (blockchainError) {
+      console.error('Error preparing for blockchain creation:', blockchainError);
+      // Continue anyway since we've created the MongoDB record
+    }
 
     return NextResponse.json({
       success: true,
@@ -58,8 +82,10 @@ export async function POST(request: Request) {
         id: campaign._id,
         token: campaign._id,
         publicKey,
-        privateKey, // Return the same private key
-        status: 'draft'
+        privateKey,
+        status: 'draft',
+        blockchainId,
+        needsBlockchainCreation: true
       }
     });
 
@@ -94,8 +120,11 @@ export async function GET() {
       } else {
         campaignData.status = 'active';
       }
-
-      return campaignData;
+      
+      return {
+        ...campaignData,
+        id: campaignData._id
+      };
     });
 
     return NextResponse.json(updatedCampaigns);
