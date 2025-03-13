@@ -64,21 +64,40 @@ export async function POST(request: Request) {
     });
     
     try {
-      // Get the key store with the account credentials
+      // First check if the campaign already exists
       const keyStore = await getServerKeyStore();
-      
-      // Connect to NEAR with the key store
       const near = await connect({
         ...serverNearConfig,
         keyStore,
         headers: {}
       });
       
-      // Get the account
       const account = await near.account(serverNearConfig.accountId);
+      console.log('Account ID:', serverNearConfig.accountId);
       
-      // Log account details to verify it's working
-      console.log('Account ID:', account.accountId);
+      try {
+        // Check if campaign already exists
+        const existingCampaign = await account.viewFunction({
+          contractId: serverNearConfig.contractName,
+          methodName: 'get_campaign',
+          args: {
+            campaign_id: campaignId
+          }
+        });
+        
+        if (existingCampaign) {
+          console.log('Campaign already exists on blockchain:', existingCampaign);
+          return NextResponse.json({
+            success: true,
+            message: 'Campaign already exists on blockchain',
+            exists: true,
+            campaign: existingCampaign
+          });
+        }
+      } catch (viewError) {
+        // If the campaign doesn't exist, this will throw an error, which is expected
+        console.log('Campaign does not exist yet, creating it now');
+      }
       
       // Call the create_campaign method with the correct parameters
       const result = await account.functionCall({
@@ -102,10 +121,20 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         transactionHash: result.transaction_outcome.id,
-        result
+        result,
+        explorerUrl: `${process.env.NEXT_PUBLIC_NEAR_EXPLORER_URL || 'https://explorer.testnet.near.org'}/transactions/${result.transaction_outcome.id}`
       });
     } catch (callError) {
       console.error('Error calling create_campaign:', callError);
+      
+      // Check if the error is because the campaign already exists
+      if (callError.message && callError.message.includes('already exists')) {
+        return NextResponse.json({
+          success: true,
+          message: 'Campaign already exists on blockchain',
+          exists: true
+        });
+      }
       
       // Provide more detailed error information
       let errorMessage = callError.message;

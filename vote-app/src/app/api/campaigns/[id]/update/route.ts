@@ -20,30 +20,28 @@ export async function PATCH(
     const updateData = await request.json();
     console.log('Updating campaign with data:', updateData);
     
-    const campaign = await Campaign.findByIdAndUpdate(
+    // Find and update the campaign
+    const updatedCampaign = await Campaign.findByIdAndUpdate(
       params.id,
       { $set: updateData },
-      { new: true }
+      { new: true, runValidators: true }
     );
     
-    if (!campaign) {
+    if (!updatedCampaign) {
       return NextResponse.json(
         { error: 'Campaign not found' },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json({
       success: true,
-      campaign: {
-        id: campaign._id,
-        blockchainTxHash: campaign.blockchainTxHash
-      }
+      campaign: updatedCampaign
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating campaign:', error);
     return NextResponse.json(
-      { error: 'Failed to update campaign' },
+      { error: error.message || 'Failed to update campaign' },
       { status: 500 }
     );
   }

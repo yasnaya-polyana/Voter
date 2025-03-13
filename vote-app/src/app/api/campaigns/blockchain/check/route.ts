@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { connect, keyStores } from 'near-api-js';
-import { nearConfig } from '@/lib/near-config';
+import { connect } from 'near-api-js';
+import { getServerKeyStore, serverNearConfig } from '@/lib/near-server-config';
 
 export async function POST(request: Request) {
   try {
@@ -8,47 +8,61 @@ export async function POST(request: Request) {
     
     if (!campaignId) {
       return NextResponse.json(
-        { error: 'Campaign ID is required' },
+        { error: 'Missing campaign ID' },
         { status: 400 }
       );
     }
     
     console.log('Checking if campaign exists on blockchain:', campaignId);
     
-    // Connect to NEAR
-    const keyStore = new keyStores.InMemoryKeyStore();
-    const near = await connect({
-      keyStore,
-      ...nearConfig,
-      headers: {}
-    });
-    
-    // Get the account
-    const account = await near.account('yasn.testnet');
-    
     try {
-      // Call the contract method to get the campaign
+      // Get the key store with the account credentials
+      const keyStore = await getServerKeyStore();
+      
+      // Connect to NEAR with the key store
+      const near = await connect({
+        ...serverNearConfig,
+        keyStore,
+        headers: {}
+      });
+      
+      // Get the account
+      const account = await near.account(serverNearConfig.accountId);
+      
+      // Call the get_campaign method to check if the campaign exists
       const result = await account.viewFunction({
-        contractId: 'yasn.testnet',
+        contractId: serverNearConfig.contractName,
         methodName: 'get_campaign',
-        args: { campaign_id: campaignId }
+        args: {
+          campaign_id: campaignId
+        }
       });
       
       console.log('Campaign exists on blockchain:', !!result);
       
       return NextResponse.json({
-        exists: true,
-        details: result
+        exists: !!result,
+        campaign: result
       });
-    } catch (error) {
-      console.log('Campaign does not exist on blockchain or error occurred:', error);
+    } catch (callError) {
+      console.error('Error checking campaign on blockchain:', callError);
+      
+      // If the error is because the campaign doesn't exist, return false
+      if (callError.message && callError.message.includes('does not exist')) {
+        return NextResponse.json({
+          exists: false,
+          error: 'Campaign does not exist on blockchain'
+        });
+      }
+      
+      // For other errors, return the error
       return NextResponse.json({
         exists: false,
-        error: 'Campaign not found on blockchain'
-      });
+        error: callError.message || 'Unknown error checking campaign'
+      }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error checking campaign on blockchain:', error);
+    console.error('Error in blockchain check API:', error);
     return NextResponse.json(
       { error: 'Failed to check campaign on blockchain' },
       { status: 500 }
