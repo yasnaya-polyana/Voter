@@ -1,168 +1,155 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNear } from '@/context/NearContext';
-import { getContract, checkCampaignAndVote } from '@/lib/near-contract';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface VoteHistory {
+interface VoteHistoryItem {
   campaignId: string;
-  candidateId: string;
-  timestamp: number;
-  campaignTitle?: string;
-  transactionHash: string;
+  campaignName: string;
+  candidateName: string;
+  timestamp: string;
 }
 
-export default function VoterHistoryPage() {
+const VoterHistoryPage: React.FC = () => {
   const { wallet, isSignedIn, signIn } = useNear();
-  const [voteHistory, setVoteHistory] = useState<VoteHistory[]>([]);
+  const router = useRouter();
+  const [history, setHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [contractStatus, setContractStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const [campaignDetails, setCampaignDetails] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    async function checkContractStatus() {
-      if (!wallet || !isSignedIn) return;
-
+    const fetchVoterHistory = async () => {
       try {
-        const contract = getContract(wallet.account());
-        console.log('=== Contract Status Check ===');
-        console.log('Contract Address:', process.env.NEXT_PUBLIC_NEAR_CONTRACT_NAME);
-        console.log('Connected Account:', wallet.getAccountId());
-        
-        // Try to make a simple view call to verify contract is responsive
-        const testCall = await contract.get_voter_history({
-          voter_id: wallet.getAccountId()
-        });
-        
-        console.log('Contract is active and responding');
-        console.log('Test call result:', testCall);
-        setContractStatus('active');
-      } catch (error) {
-        console.error('Contract check failed:', error);
-        setContractStatus('inactive');
-      }
-    }
-
-    async function loadVoteHistory() {
-      if (!wallet || !isSignedIn) return;
-
-      try {
-        setLoading(true);
-        const contract = getContract(wallet.account());
-        
-        console.log('=== Detailed Vote History Check ===');
-        
-        // Check specific transaction
-        const specificTxHash = '3rSPSCaTY9VNHfocsQWE1Bt1j4CJ2BhkKVaHkdEXERLk';
-        console.log('Looking up transaction:', specificTxHash);
-        
-        // Get campaign details
-        const campaignResult = await contract.get_campaign_results({
-          campaign_id: '1' // Replace with your actual campaign ID
-        });
-        console.log('Campaign Results:', campaignResult);
-        
-        // Get voter history
-        const history = await contract.get_voter_history({
-          voter_id: wallet.getAccountId()
-        });
-        console.log('Voter History:', history);
-        
-        if (Array.isArray(history)) {
-          setVoteHistory(history.map(vote => ({
-            ...vote,
-            transactionHash: specificTxHash // Include the transaction hash
-          })));
+        if (!isSignedIn) {
+          setLoading(false);
+          return;
         }
-      } catch (error) {
-        console.error('Detailed history check failed:', error);
+
+        const accountId = wallet?.account()?.accountId;
+        console.log('Fetching history for account:', accountId);
+        
+        if (!accountId) {
+          setError('Account ID not available');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch voter history from API
+        const response = await fetch(`/api/voter/history?account=${accountId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch voter history');
+        }
+        
+        const data = await response.json();
+        console.log('Voter history response:', data);
+        
+        if (data.success && data.history) {
+          setHistory(data.history);
+          
+          // Fetch details for each campaign
+          const details: Record<string, any> = {};
+          for (const campaignId of data.history) {
+            try {
+              const campaignResponse = await fetch(`/api/campaigns/blockchain/${campaignId}`);
+              if (campaignResponse.ok) {
+                const campaignData = await campaignResponse.json();
+                details[campaignId] = campaignData;
+              }
+            } catch (err) {
+              console.error(`Error fetching details for campaign ${campaignId}:`, err);
+            }
+          }
+          
+          setCampaignDetails(details);
+        } else {
+          setError(data.error || 'No history data returned');
+        }
+      } catch (err) {
+        console.error('Error fetching voter history:', err);
+        setError('Failed to load voting history');
+      } finally {
         setLoading(false);
       }
-    }
+    };
 
-    async function verifyVoteDetails() {
-      if (wallet && isSignedIn) {
-        const details = await checkCampaignAndVote(wallet.account());
-        console.log('Vote verification details:', details);
-      }
-    }
-
-    checkContractStatus();
-    loadVoteHistory();
-    verifyVoteDetails();
+    fetchVoterHistory();
   }, [wallet, isSignedIn]);
-
-  // Add contract status display
-  const renderContractStatus = () => (
-    <div className={`alert ${contractStatus === 'active' ? 'alert-success' : 'alert-error'} mb-4`}>
-      <div className="flex-1">
-        <label>Contract Status: {contractStatus}</label>
-      </div>
-    </div>
-  );
-
-  // Render vote history with more details
-  const renderVoteHistory = () => (
-    <div className="space-y-4">
-      {voteHistory.map((vote, index) => (
-        <div key={index} className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Vote Record #{index + 1}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p><strong>Campaign ID:</strong> {vote.campaignId}</p>
-                <p><strong>Candidate ID:</strong> {vote.candidateId}</p>
-              </div>
-              <div>
-                <p><strong>Timestamp:</strong> {vote.timestamp.toLocaleString()}</p>
-                <p>
-                  <strong>Transaction:</strong>
-                  <a 
-                    href={`https://testnet.nearblocks.io/txns/${vote.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link link-primary ml-2"
-                  >
-                    View on NEAR Explorer
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
   if (!isSignedIn) {
     return (
-      <div className="text-center p-4">
-        <h1 className="text-2xl font-bold mb-4">Voting History</h1>
-        <button onClick={signIn} className="btn btn-primary">
-          Sign in to view your voting history
-        </button>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Voter History</h1>
+        <div className="bg-base-200 p-6 rounded-lg shadow-md">
+          <p className="mb-4">Please sign in to view your voting history.</p>
+          <button 
+            onClick={signIn}
+            className="btn btn-primary"
+          >
+            Sign In with NEAR
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Your Voting History</h1>
-      {renderContractStatus()}
+      <h1 className="text-2xl font-bold mb-4">Your Voting History</h1>
       
       {loading ? (
-        <div className="text-center">
+        <div className="flex justify-center my-8">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
-      ) : voteHistory.length === 0 ? (
-        <div className="alert alert-info">
-          <div className="flex-1">
-            <label>No voting history found. Cast your first vote!</label>
-          </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{error}</span>
+        </div>
+      ) : history.length === 0 ? (
+        <div className="bg-base-200 p-6 rounded-lg shadow-md">
+          <p>You haven't voted in any campaigns yet.</p>
+          <Link href="/campaigns" className="btn btn-primary mt-4">
+            Browse Campaigns
+          </Link>
         </div>
       ) : (
-        renderVoteHistory()
+        <div className="grid gap-4">
+          <div className="overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Campaign ID</th>
+                  <th>Campaign Name</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((campaignId) => (
+                  <tr key={campaignId}>
+                    <td>{campaignId}</td>
+                    <td>
+                      {campaignDetails[campaignId]?.title || 'Loading...'}
+                    </td>
+                    <td>
+                      <Link 
+                        href={`/campaign/${campaignId}`}
+                        className="btn btn-sm btn-outline"
+                      >
+                        View Campaign
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default VoterHistoryPage;

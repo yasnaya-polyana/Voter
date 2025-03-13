@@ -64,18 +64,25 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
       });
 
       // Call the contract method with the blockchain ID
-      await contract.cast_vote({
+      const result = await contract.cast_vote({
         campaign_id: blockchainId,
         candidate_id: selectedCandidate.toString(),
         public_key: publicKey.toString().trim().toUpperCase()
       }, '300000000000000', '1000000000000000000000');
-
+      
+      console.log('Vote transaction successful:', result);
+      
+      // Wait a moment for the transaction to be processed
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // Handle successful transaction
+      console.log('Redirecting to voter history page...');
       router.push('/voter/history');
-    } catch (error: any) {
-      console.error('Error in voting process:', error);
-      setLoading(false);
+    } catch (error) {
+      console.error('Error casting vote:', error);
       alert(`Failed to cast vote: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -50,6 +50,13 @@ export async function POST(request: Request) {
       blockchainId
     });
 
+    // After creating the campaign
+    console.log('Campaign created with details:', {
+      id: campaign._id,
+      blockchainId: campaign.blockchainId,
+      hasBlockchainId: !!campaign.blockchainId
+    });
+
     // Now create the campaign on the blockchain
     try {
       // For server-side operations, we need to use a different approach

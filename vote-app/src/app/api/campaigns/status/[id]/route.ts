@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Campaign from '@/models/Campaign';
-import dbConnect from '@/lib/mongodb';  // Fix this import
+import dbConnect from '@/lib/mongodb';
 
 export async function GET(
   request: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
     
-    const { token } = params;
-    
-    if (!mongoose.Types.ObjectId.isValid(token)) {
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
-        { error: 'Invalid token format' },
+        { error: 'Invalid campaign ID' },
         { status: 400 }
       );
     }
     
-    const campaign = await Campaign.findById(token);
+    const campaign = await Campaign.findById(params.id);
     
     if (!campaign) {
       return NextResponse.json(
@@ -28,20 +26,20 @@ export async function GET(
       );
     }
     
-    // Return all necessary fields
     return NextResponse.json({
-      campaignName: campaign.campaignName,
-      isPublic: campaign.isPublic,
-      publicKey: campaign.publicKey,
-      privateKey: campaign.privateKey,
+      id: campaign._id,
+      name: campaign.campaignName,
+      status: campaign.status,
+      hasBlockchainId: !!campaign.blockchainId,
       blockchainId: campaign.blockchainId,
+      hasBlockchainTxHash: !!campaign.blockchainTxHash,
       blockchainTxHash: campaign.blockchainTxHash
     });
   } catch (error) {
-    console.error('Error fetching campaign keys:', error);
+    console.error('Error fetching campaign status:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch campaign keys' },
+      { error: 'Failed to fetch campaign status' },
       { status: 500 }
     );
   }
-} 
+}

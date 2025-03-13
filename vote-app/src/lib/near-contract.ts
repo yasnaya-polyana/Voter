@@ -1,5 +1,6 @@
 import { Contract } from 'near-api-js';
 import { utils } from 'near-api-js';
+import { CreateCampaignParams, CastVoteParams, Campaign } from './near-contract-types';
 
 interface VoteHistory {
   campaignId: string;
@@ -34,6 +35,16 @@ export interface VoteContract extends Contract {
   }>;
 
   get_voter_history: (args: { voter_id: string }) => Promise<any[]>;
+  
+  create_campaign: (
+    args: CreateCampaignParams,
+    gas?: string,
+    deposit?: string
+  ) => Promise<any>;
+  
+  get_campaigns: () => Promise<Campaign[]>;
+  
+  get_votes: (args: { campaign_id: string }) => Promise<number>;
 }
 
 export function getContract(account: any): VoteContract {
@@ -44,7 +55,7 @@ export function getContract(account: any): VoteContract {
     account,
     contractName, 
     {
-      viewMethods: ['get_campaign', 'get_campaign_results', 'get_voter_history'],
+      viewMethods: ['get_campaign', 'get_campaign_results', 'get_voter_history', 'get_campaigns', 'get_votes'],
       changeMethods: ['cast_vote', 'create_campaign'],
       sender: account.accountId
     }
@@ -118,51 +129,6 @@ export async function checkCampaignAndVote(account: any) {
       error: error.message
     };
   }
-}
-
-export function get_campaign(campaign_id: string): Campaign | null {
-  if (!campaigns.contains(campaign_id)) {
-    return null;
-  }
-  return campaigns.getSome(campaign_id);
-}
-
-export function get_campaign_results(campaign_id: string): Map<string, i32> {
-  assert(campaigns.contains(campaign_id), "Campaign not found");
-  
-  const campaignVotes = votes.contains(campaign_id) 
-    ? votes.getSome(campaign_id) 
-    : new Array<Vote>();
-  
-  const results = new Map<string, i32>();
-  
-  for (let i = 0; i < campaignVotes.length; i++) {
-    const vote = campaignVotes[i];
-    const count = results.has(vote.candidate_id) ? results.get(vote.candidate_id) + 1 : 1;
-    results.set(vote.candidate_id, count);
-  }
-  
-  return results;
-}
-
-export function get_voter_history(voter_id: string): Array<Vote> {
-  const history = new Array<Vote>();
-  
-  // This is inefficient but works for small datasets
-  const campaignIds = campaigns.keys();
-  for (let i = 0; i < campaignIds.length; i++) {
-    const campaignId = campaignIds[i];
-    if (votes.contains(campaignId)) {
-      const campaignVotes = votes.getSome(campaignId);
-      for (let j = 0; j < campaignVotes.length; j++) {
-        if (campaignVotes[j].voter == voter_id) {
-          history.push(campaignVotes[j]);
-        }
-      }
-    }
-  }
-  
-  return history;
 }
 
 export async function checkContractMethods(account: any) {

@@ -79,48 +79,76 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ campaignId, onSubmitted, 
       
       // Create campaign on blockchain if needed
       if (campaignData.blockchainId && wallet && isSignedIn) {
+        console.log('Creating campaign on blockchain with ID:', campaignData.blockchainId);
+        
         try {
-          console.log('🔗 BLOCKCHAIN: Creating campaign on blockchain with ID:', campaignData.blockchainId);
+          const contract = getContract(wallet.account());
           
-          // Extract candidate names
-          const candidateNames = candidates.map(c => c.name);
-          console.log('🔗 BLOCKCHAIN: Candidate names:', candidateNames);
-          
-          // Create on blockchain with detailed logging
-          const args = {
-            campaign_id: campaignData.blockchainId,
-            title: campaignData.campaignName,
-            description: campaignData.description || '',
-            candidates: candidateNames,
-            start_date: new Date(campaignData.startDate).getTime().toString(),
-            end_date: new Date(campaignData.endDate).getTime().toString(),
-            is_public: campaignData.isPublic
-          };
-          
-          console.log('🔗 BLOCKCHAIN: Calling contract with args:', JSON.stringify(args, null, 2));
-          
-          // Add transaction details logging
-          const result = await wallet.account().functionCall({
-            contractId: 'yasn.testnet',
-            methodName: 'create_campaign',
-            args: args,
-            gas: '300000000000000',
-            attachedDeposit: '0'
+          // Log the contract object to see if it's initialized correctly
+          console.log('Contract object:', {
+            contractId: contract.contractId,
+            hasCreateCampaign: typeof contract.create_campaign === 'function'
           });
           
-          console.log('🔗 BLOCKCHAIN: Transaction successful!');
-          console.log('🔗 BLOCKCHAIN: Transaction hash:', result.transaction.hash);
-          console.log('🔗 BLOCKCHAIN: Gas used:', result.transaction_outcome.outcome.gas_burnt);
+          // Generate a description from the campaign name if not provided
+          const campaignDescription = campaignData.description || 
+            `Voting campaign for ${campaignData.campaignName}`;
           
-          // Verify the campaign was created by calling a view method
-          try {
-            const contract = getContract(wallet.account());
-            // Use the correct view method name from your contract
-            const campaignData = await contract.get_campaigns();
-            console.log('🔗 BLOCKCHAIN: Verification - All campaigns:', campaignData);
-          } catch (verifyError) {
-            console.error('🔗 BLOCKCHAIN: Verification failed:', verifyError);
-            console.error('🔗 BLOCKCHAIN: This may indicate the campaign was not created or the view method is incorrect');
+          // Log the exact parameters being sent to the contract
+          const createParams = {
+            campaign_id: campaignData.blockchainId,
+            title: campaignData.campaignName,
+            description: campaignDescription,
+            candidates: candidates.map(c => ({ 
+              id: c.id, 
+              name: c.name 
+            }))
+          };
+          
+          console.log('🔗 BLOCKCHAIN: Create campaign parameters:', JSON.stringify(createParams));
+          
+          // Add gas and deposit parameters explicitly
+          const gas = '300000000000000'; // 300 TGas
+          const deposit = '0'; // No deposit needed
+          
+          console.log('🔗 BLOCKCHAIN: Calling create_campaign with gas:', gas);
+          
+          // Create the campaign on the blockchain with explicit gas
+          const result = await contract.create_campaign(
+            createParams,
+            gas,
+            deposit
+          );
+          
+          console.log('🔗 BLOCKCHAIN: Campaign created successfully:', result);
+          
+          // After successful blockchain transaction
+          if (result && result.transaction && result.transaction.hash) {
+            console.log('🔗 BLOCKCHAIN: Transaction hash:', result.transaction.hash);
+            
+            // Store the transaction hash in the database
+            try {
+              const updateResponse = await fetch(`/api/campaigns/${campaignId}/update`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  blockchainTxHash: result.transaction.hash,
+                  status: 'active' // Update status to active
+                }),
+              });
+              
+              if (!updateResponse.ok) {
+                console.error('Failed to store transaction hash:', await updateResponse.text());
+              } else {
+                console.log('Transaction hash stored successfully');
+              }
+            } catch (updateError) {
+              console.error('Error storing transaction hash:', updateError);
+            }
+          } else {
+            console.warn('No transaction hash found in result:', result);
           }
         } catch (blockchainError) {
           console.error('❌ BLOCKCHAIN ERROR:', blockchainError);
@@ -144,7 +172,11 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ campaignId, onSubmitted, 
           console.warn('⚠️ BLOCKCHAIN WARNING: Campaign created in MongoDB but blockchain creation failed');
         }
       } else {
-        console.warn('Skipping blockchain creation due to missing prerequisites');
+        console.warn('Skipping blockchain creation due to missing prerequisites:', {
+          hasBlockchainId: !!campaignData.blockchainId,
+          hasWallet: !!wallet,
+          isSignedIn: !!isSignedIn
+        });
       }
 
       // Call the onSubmitted callback to trigger the redirect

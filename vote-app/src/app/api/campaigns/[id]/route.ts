@@ -37,11 +37,11 @@ export async function GET(
       startDate: campaign.startDate.toISOString(),
       endDate: campaign.endDate.toISOString(),
       status: campaign.status,
-      candidates: campaign.candidates.map(candidate => ({
-        _id: candidate._id,
-        name: candidate.name,
-        description: candidate.description,
-        voteCount: candidate.voteCount || 0
+      candidates: campaign.candidates.map((c, index) => ({ 
+        id: (index + 1).toString(),
+        name: c.name,
+        description: c.description,
+        voteCount: c.voteCount || 0
       })),
       totalVotes: campaign.totalVotes || 0,
       announcements: campaign.announcements || [],

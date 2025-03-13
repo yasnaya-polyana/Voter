@@ -1,8 +1,18 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 // First, clear any existing models to prevent OverwriteModelError
 mongoose.models = {};
 
+// Candidate interface
+export interface ICandidate extends Document {
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  voteCount: number;
+  blockchainId?: string;
+}
+
+// Candidate schema
 const CandidateSchema = new Schema({
   name: {
     type: String,
@@ -13,8 +23,29 @@ const CandidateSchema = new Schema({
   voteCount: {
     type: Number,
     default: 0
+  },
+  blockchainId: {
+    type: String
   }
-});
+}, { timestamps: false });
+
+// Campaign interface
+export interface ICampaign extends Document {
+  campaignName: string;
+  description?: string;
+  isPublic: boolean;
+  publicKey: string;
+  privateKey?: string;
+  startDate: Date;
+  endDate: Date;
+  status: 'draft' | 'active' | 'ended' | 'upcoming';
+  createdBy: string;
+  totalVotes: number;
+  candidates: ICandidate[];
+  blockchainId?: string;
+  blockchainTxHash?: string;
+  announcements?: { title: string; content: string; date: Date }[];
+}
 
 const AnnouncementSchema = new Schema({
   content: {
@@ -27,6 +58,7 @@ const AnnouncementSchema = new Schema({
   }
 });
 
+// Campaign schema
 const CampaignSchema = new Schema({
   campaignName: {
     type: String,
@@ -79,6 +111,9 @@ const CampaignSchema = new Schema({
   blockchainId: {
     type: String
   },
+  blockchainTxHash: {
+    type: String
+  },
 }, {
   timestamps: true,
   strict: true,
@@ -90,7 +125,7 @@ const CampaignSchema = new Schema({
 CampaignSchema.index({ createdBy: 1, status: 1, startDate: -1 });
 
 // Drop the problematic index if it exists
-const Campaign = mongoose.model('Campaign', CampaignSchema);
+const Campaign = mongoose.models.Campaign || mongoose.model<ICampaign>('Campaign', CampaignSchema);
 
 // This is an async operation, but we can't use async/await at the top level
 // So we handle it in a try/catch block

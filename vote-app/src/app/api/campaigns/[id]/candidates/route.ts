@@ -19,7 +19,15 @@ export async function POST(
     }
 
     const { candidates } = await request.json();
+    
+    if (!candidates || !Array.isArray(candidates)) {
+      return NextResponse.json(
+        { error: 'Candidates array is required' },
+        { status: 400 }
+      );
+    }
 
+    // Find the campaign
     const campaign = await Campaign.findById(params.id);
     
     if (!campaign) {
@@ -29,25 +37,27 @@ export async function POST(
       );
     }
 
-    // Update candidates
-    campaign.candidates = candidates;
-
-    // Calculate and update status
-    const currentStatus = getCampaignStatus(campaign.startDate, campaign.endDate);
-    campaign.status = currentStatus;
-
+    // Add blockchain IDs to candidates
+    const candidatesWithBlockchainIds = candidates.map((candidate, index) => ({
+      ...candidate,
+      blockchainId: `candidate_${index + 1}` // Simple numeric IDs for blockchain
+    }));
+    
+    // Add candidates to the campaign
+    campaign.candidates = candidatesWithBlockchainIds;
+    
+    // Save the campaign
     await campaign.save();
 
     return NextResponse.json({
       success: true,
-      candidates: campaign.candidates,
-      status: campaign.status
+      message: 'Candidates added successfully',
+      candidates: campaign.candidates
     });
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding candidates:', error);
     return NextResponse.json(
-      { error: 'Failed to add candidates' },
+      { error: error.message || 'Failed to add candidates' },
       { status: 500 }
     );
   }

@@ -3,8 +3,9 @@ import dbConnect from '@/lib/mongodb';
 import Campaign from '@/models/Campaign';
 import mongoose from 'mongoose';
 import { getContract } from '@/lib/near-contract';
-import { connect, keyStores, WalletConnection } from 'near-api-js';
+import { connect, keyStores } from 'near-api-js';
 import { nearConfig } from '@/lib/near-config';
+import { getServerKeyStore, serverNearConfig } from '@/lib/near-server-config';
 
 export async function POST(
   request: Request,
@@ -87,35 +88,39 @@ export async function POST(
 
     // Now interact with the blockchain
     try {
-      // Initialize connection to NEAR
-      const keyStore = new keyStores.InMemoryKeyStore();
+      // Get the key store with the account credentials
+      const keyStore = await getServerKeyStore();
+      
+      // Connect to NEAR with the key store
       const near = await connect({
+        ...serverNearConfig,
         keyStore,
-        ...nearConfig,
         headers: {}
       });
       
-      // Use a service account to cast the vote
-      // In production, this should be the user's own account
-      const serviceAccount = await near.account('yasn.testnet');
+      // Get the account
+      const account = await near.account(serverNearConfig.accountId);
+      
+      // Get the candidate name instead of ID
+      const candidateName = candidate.name;
       
       console.log('Casting vote on blockchain with args:', {
         campaign_id: campaign.blockchainId,
-        candidate_id: candidateId,
+        candidate_id: candidateName,  // Use the name as the ID
         public_key: publicKey
       });
       
       // Cast the vote on the blockchain
-      await serviceAccount.functionCall({
-        contractId: 'yasn.testnet',
+      await account.functionCall({
+        contractId: serverNearConfig.contractName,
         methodName: 'cast_vote',
         args: {
           campaign_id: campaign.blockchainId,
-          candidate_id: candidateId,
+          candidate_id: candidateName,  // Use the name as the ID
           public_key: publicKey
         },
-        gas: '300000000000000',
-        attachedDeposit: '0'
+        gas: serverNearConfig.GAS,
+        attachedDeposit: serverNearConfig.attachedDeposit
       });
       
       console.log('Vote cast on blockchain successfully');
