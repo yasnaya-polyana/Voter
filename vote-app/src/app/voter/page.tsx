@@ -1,44 +1,64 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
+import { useNear } from '@/context/NearContext';
+import Link from 'next/link';
 
-const VoterPage: React.FC = () => {
-  const { isLoggedIn, user } = useAuth();
+const VoterHomePage = () => {
   const router = useRouter();
+  const { isSignedIn } = useNear();
+  const [campaignCode, setCampaignCode] = useState('');
 
-  useEffect(() => {
-    if (!isLoggedIn || user?.userType !== 'voter') {
-      router.push('/login');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (campaignCode.trim()) {
+      router.push(`/voter/${campaignCode.trim()}`);
     }
-  }, [isLoggedIn, user, router]);
-
-  if (!isLoggedIn || user?.userType !== 'voter') {
-    return null; // or a loading spinner
-  }
+  };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Voter Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link href="/voter/vote" className="btn btn-primary btn-lg">
-          Vote
-        </Link>
-        <Link href="/voter/history" className="btn btn-secondary btn-lg">
-          Voting History
-        </Link>
-        <Link href="/voter/results" className="btn btn-accent btn-lg">
-          View Results
-        </Link>
+      
+      <div className="grid grid-cols-1 gap-6">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Enter Campaign Code</h2>
+            <p className="mb-4">Enter a campaign code to access a specific voting campaign.</p>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={campaignCode}
+                  onChange={(e) => setCampaignCode(e.target.value)}
+                  placeholder="Enter campaign code" 
+                  className="input input-bordered flex-1" 
+                  required 
+                />
+                <button type="submit" className="btn btn-primary">
+                  Go to Vote
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Your Voting History</h2>
+            <p>View campaigns you've participated in and your voting history.</p>
+            <div className="card-actions justify-end mt-4">
+              <Link href="/voter/history" className="btn btn-primary">
+                View History
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="mt-8 text-lg">
-        Welcome to your Voter Dashboard. Here you can participate in active campaigns,
-        view your voting history, and check the results of past campaigns.
-      </p>
     </div>
   );
 };
 
-export default VoterPage;
+export default VoterHomePage;
