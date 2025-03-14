@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     // Get the accountId from the query parameters
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get('accountId');
+    const includeDetails = searchParams.get('includeDetails') === 'true';
     
     if (!accountId) {
       return NextResponse.json(
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
     console.log('Fetching voting history for account:', accountId);
 
     // Find all votes by this account - try both field names
+    
     const votes = await Vote.find({ 
       $or: [
         { userId: accountId },
@@ -39,13 +41,36 @@ export async function GET(request: Request) {
           console.log(`Campaign not found for vote: ${vote.campaignId}`);
         }
         
-        return {
+        const voteHistory = {
           campaignId: vote.campaignId.toString(),
           campaignName: vote.campaignName || (campaign ? campaign.name || campaign.campaignName : 'Unknown Campaign'),
-          candidateVoted: vote.candidateName,
+          candidateVoted: vote.candidateName || vote.candidateVotedFor,
           voteDate: vote.voteDate || vote.createdAt,
           publicKey: campaign ? campaign.publicKey : '',
+          status: vote.status,
+          verificationHash: vote.verificationHash,
+          blockchainTxHash: vote.blockchainTxHash || campaign?.blockchainTxHash,
+          _id: vote._id.toString(),
         };
+
+        // Include additional campaign details if requested
+        if (includeDetails && campaign) {
+          voteHistory.campaignDetails = {
+            description: campaign.description,
+            startDate: campaign.startDate,
+            endDate: campaign.endDate,
+            status: campaign.status,
+            totalVotes: campaign.totalVotes,
+            candidates: campaign.candidates.map(candidate => ({
+              _id: candidate._id.toString(),
+              name: candidate.name,
+              description: candidate.description,
+              voteCount: candidate.voteCount || 0
+            }))
+          };
+        }
+        
+        return voteHistory;
       })
     );
 

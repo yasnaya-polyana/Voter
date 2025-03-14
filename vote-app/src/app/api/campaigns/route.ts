@@ -110,13 +110,17 @@ export async function GET() {
     await dbConnect();
     const currentDate = new Date();
 
+    console.log('Fetching all active campaigns');
+    
     const campaigns = await Campaign.find({
       startDate: { $lte: currentDate },
       endDate: { $gte: currentDate }
     })
     .sort({ createdAt: -1 })
-    .select('campaignName description startDate endDate status isPublic totalVotes');
+    .select('campaignName description startDate endDate status isPublic totalVotes publicKey createdBy candidates blockchainId blockchainTxHash');
 
+    console.log(`Found ${campaigns.length} active campaigns`);
+    
     const updatedCampaigns = campaigns.map(campaign => {
       const campaignData = campaign.toObject();
       
@@ -128,9 +132,13 @@ export async function GET() {
         campaignData.status = 'active';
       }
       
+      // Log the createdBy field to help with debugging
+      console.log(`Campaign ${campaignData._id} createdBy: ${campaignData.createdBy}`);
+      
       return {
         ...campaignData,
-        id: campaignData._id
+        id: campaignData._id,
+        candidateCount: campaign.candidates?.length || 0
       };
     });
 
