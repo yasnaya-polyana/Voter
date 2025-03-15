@@ -37,8 +37,8 @@ export async function GET(
       );
     }
 
-    // Get the campaign details
-    const campaign = await Campaign.findOne({ _id: vote.campaignId });
+    // Get the campaign details - use lean() to get a plain JavaScript object
+    const campaign = await Campaign.findOne({ _id: vote.campaignId }).lean();
     
     if (!campaign) {
       return NextResponse.json(
@@ -46,6 +46,26 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Log campaign details for debugging
+    console.log('Campaign details for vote:', {
+      id: campaign._id,
+      name: campaign.campaignName,
+      totalVotes: campaign.totalVotes || 0,
+      candidatesCount: campaign.candidates?.length || 0,
+      candidateVotes: campaign.candidates.map(c => ({ name: c.name, votes: c.voteCount || 0 }))
+    });
+
+    // Find the candidate that was voted for
+    const votedCandidate = campaign.candidates.find(
+      c => c.name === vote.candidateName || c._id.toString() === vote.candidateVotedFor
+    );
+
+    console.log('Voted candidate:', votedCandidate ? {
+      id: votedCandidate._id,
+      name: votedCandidate.name,
+      votes: votedCandidate.voteCount || 0
+    } : 'Not found');
 
     // Format the response
     const voteDetails = {
@@ -67,7 +87,7 @@ export async function GET(
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: campaign.status,
-        totalVotes: campaign.totalVotes,
+        totalVotes: campaign.totalVotes || 0,
         candidates: campaign.candidates.map(candidate => ({
           _id: candidate._id.toString(),
           name: candidate.name,
@@ -81,7 +101,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      vote: voteDetails
+      vote: voteDetails,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error fetching vote details:', error);

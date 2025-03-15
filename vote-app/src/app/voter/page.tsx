@@ -1,21 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNear } from '@/context/NearContext';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const VoterHomePage = () => {
   const router = useRouter();
-  const { isSignedIn } = useNear();
+  const { isSignedIn, loading: nearLoading } = useNear();
+  const { loading: authLoading } = useAuth();
   const [campaignCode, setCampaignCode] = useState('');
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    // Set a short timeout to ensure components have time to hydrate
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (campaignCode.trim()) {
+      setPageLoading(true);
       router.push(`/voter/${campaignCode.trim()}`);
     }
   };
+
+  if (pageLoading || authLoading || nearLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 w-3/4 bg-base-200 animate-pulse rounded"></div>
+        <div className="grid grid-cols-1 gap-6">
+          <div className="h-64 bg-base-200 animate-pulse rounded-box"></div>
+          <div className="h-64 bg-base-200 animate-pulse rounded-box"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -61,4 +87,10 @@ const VoterHomePage = () => {
   );
 };
 
-export default VoterHomePage;
+const ProtectedVoterHomePage = () => (
+  <ProtectedRoute allowedUserTypes={['voter']}>
+    <VoterHomePage />
+  </ProtectedRoute>
+);
+
+export default ProtectedVoterHomePage;

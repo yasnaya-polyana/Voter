@@ -20,6 +20,7 @@ const VotePage = () => {
   
   // Get campaign ID from query parameters
   const campaignId = searchParams.get('campaignId');
+  const isPrivate = searchParams.get('isPrivate') === 'true';
 
   useEffect(() => {
     // If no campaign ID, redirect to voter dashboard
@@ -38,6 +39,13 @@ const VotePage = () => {
         
         const data = await response.json();
         setCampaign(data);
+        
+        // If the campaign is marked as private from the URL parameter,
+        // we know the user came from the public key entry page
+        if (isPrivate && !data.isPublic) {
+          setPrivateKeyError(null);
+          setPrivateKeySubmitted(false);
+        }
       } catch (err) {
         console.error('Error fetching campaign:', err);
         setError('Failed to load campaign. Please try again.');
@@ -47,7 +55,7 @@ const VotePage = () => {
     };
     
     fetchCampaign();
-  }, [campaignId, router]);
+  }, [campaignId, router, isPrivate]);
 
   const handlePrivateKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,14 +65,44 @@ const VotePage = () => {
       return;
     }
     
-    // Verify private key
-    if (campaign && campaign.privateKey && privateKey.trim() !== campaign.privateKey) {
-      setPrivateKeyError('Invalid private key');
-      return;
+    // Since we no longer have the private key in the campaign object,
+    // we need to verify it through an API call
+    verifyPrivateKey();
+  };
+
+  const verifyPrivateKey = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/campaigns/${campaignId}/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ privateKey }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setPrivateKeyError(data.error || 'Failed to verify private key');
+        setLoading(false);
+        return;
+      }
+      
+      if (!data.valid) {
+        setPrivateKeyError('Invalid private key');
+        setLoading(false);
+        return;
+      }
+      
+      setPrivateKeyError(null);
+      setPrivateKeySubmitted(true);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error verifying private key:', error);
+      setPrivateKeyError('An error occurred while verifying the private key');
+      setLoading(false);
     }
-    
-    setPrivateKeyError(null);
-    setPrivateKeySubmitted(true);
   };
 
   const handleLogin = () => {
@@ -109,7 +147,7 @@ const VotePage = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title">Enter Private Key</h2>
-            <p className="mb-4">This is a private campaign. Please enter the private key to access it.</p>
+            <p className="mb-4">This campaign "{campaign.name || campaign.campaignName}" requires a private key to access. Please enter the private key provided by the campaign organizer.</p>
             
             <form onSubmit={handlePrivateKeySubmit}>
               <div className="form-control">
@@ -119,14 +157,22 @@ const VotePage = () => {
                   onChange={(e) => setPrivateKey(e.target.value)}
                   placeholder="Enter private key"
                   className="input input-bordered w-full"
+                  autoFocus
                 />
                 {privateKeyError && (
                   <p className="text-error text-sm mt-1">{privateKeyError}</p>
                 )}
               </div>
               <div className="form-control mt-4">
-                <button type="submit" className="btn btn-primary">
-                  Submit
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs mr-2"></span>
+                      Verifying...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
                 </button>
               </div>
             </form>

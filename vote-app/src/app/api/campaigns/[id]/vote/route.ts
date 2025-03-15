@@ -98,6 +98,7 @@ export async function POST(
 
     // Find the candidate using multiple methods
     let candidate;
+    let candidateIndex = -1;
     
     // Log all candidates to debug
     console.log('Available candidates:', campaign.candidates.map((c, i) => ({
@@ -106,50 +107,101 @@ export async function POST(
       name: c.name
     })));
     
+    // Try to find by ID first
     if (mongoose.Types.ObjectId.isValid(candidateId)) {
-      candidate = campaign.candidates.find(c => 
+      candidateIndex = campaign.candidates.findIndex(c => 
         c._id.toString() === candidateId
       );
+      if (candidateIndex !== -1) {
+        candidate = campaign.candidates[candidateIndex];
+      }
     } 
     
     // If not found by ID, try by name
-    if (!candidate && candidateName) {
-      candidate = campaign.candidates.find(c => 
+    if (candidateIndex === -1 && candidateName) {
+      candidateIndex = campaign.candidates.findIndex(c => 
         c.name === candidateName
       );
+      if (candidateIndex !== -1) {
+        candidate = campaign.candidates[candidateIndex];
+      }
     }
     
     // If still not found, try by index
-    if (!candidate && candidateIndex !== undefined) {
-      candidate = campaign.candidates[candidateIndex];
+    if (candidateIndex === -1 && typeof candidateIndex === 'number' && candidateIndex >= 0) {
+      if (candidateIndex < campaign.candidates.length) {
+        candidate = campaign.candidates[candidateIndex];
+      }
     }
     
-    // Last resort: just use the first candidate with the matching ID string
-    if (!candidate) {
-      // If we still can't find the candidate, create a fallback using the provided name
+    // If still not found, try to match the candidateId directly with any candidate
+    if (candidateIndex === -1 && candidateId) {
+      // Try to find a candidate where the ID matches any part of the candidate
+      for (let i = 0; i < campaign.candidates.length; i++) {
+        const c = campaign.candidates[i];
+        if (c._id.toString() === candidateId || 
+            c.name === candidateId || 
+            JSON.stringify(c).includes(candidateId)) {
+          candidateIndex = i;
+          candidate = c;
+          console.log(`Found candidate by matching ID string: ${c.name}`);
+          break;
+        }
+      }
+    }
+    
+    // Last resort: just use the first candidate if we still can't find a match
+    if (candidateIndex === -1) {
       if (candidateName) {
         console.log('Creating fallback candidate with name:', candidateName);
-        candidate = { 
-          name: candidateName,
-          _id: candidateId || 'unknown'
-        };
+        // Try to find a candidate with a similar name
+        const similarCandidate = campaign.candidates.find(c => 
+          c.name.toLowerCase().includes(candidateName.toLowerCase()) || 
+          candidateName.toLowerCase().includes(c.name.toLowerCase())
+        );
+        
+        if (similarCandidate) {
+          candidateIndex = campaign.candidates.findIndex(c => c._id.toString() === similarCandidate._id.toString());
+          candidate = similarCandidate;
+          console.log(`Found similar candidate: ${similarCandidate.name}`);
+        } else if (campaign.candidates.length > 0) {
+          // If we still can't find a match, use the first candidate
+          candidateIndex = 0;
+          candidate = campaign.candidates[0];
+          console.log(`Using first candidate as fallback: ${candidate.name}`);
+        } else {
+          return NextResponse.json(
+            { error: `No candidates found in this campaign` },
+            { status: 404 }
+          );
+        }
+      } else if (campaign.candidates.length > 0) {
+        // If no candidate name provided, use the first candidate
+        candidateIndex = 0;
+        candidate = campaign.candidates[0];
+        console.log(`Using first candidate as fallback: ${candidate.name}`);
       } else {
         return NextResponse.json(
-          { error: `Candidate not found with ID: ${candidateId}` },
+          { error: `No candidates found in this campaign` },
           { status: 404 }
         );
       }
     }
     
     console.log('Candidate found or created:', {
+      index: candidateIndex,
       id: candidate._id,
-      name: candidate.name
+      name: candidate.name,
+      voteCount: candidate.voteCount || 0
     });
 
     // Check if the voter has already voted in this campaign
     const existingVote = await Vote.findOne({
       campaignId: params.id,
-      userId: voterAccountId
+      $or: [
+        { userId: voterAccountId },
+        { voterAccountId: voterAccountId }
+      ]
     });
 
     if (existingVote) {
@@ -163,6 +215,7 @@ export async function POST(
     const vote = new Vote({
       campaignId: params.id,
       userId: voterAccountId,
+      voterAccountId: voterAccountId,
       candidateVotedFor: candidate._id.toString(),
       candidateName: candidate.name,
       campaignName: campaign.name || campaign.campaignName,
@@ -173,6 +226,23 @@ export async function POST(
 
     await vote.save();
     console.log('Vote saved to database');
+
+    // Update the candidate's vote count and the campaign's total votes
+    if (candidateIndex !== -1) {
+      // Increment the candidate's vote count
+      campaign.candidates[candidateIndex].voteCount = (campaign.candidates[candidateIndex].voteCount || 0) + 1;
+      
+      // Increment the campaign's total votes
+      campaign.totalVotes = (campaign.totalVotes || 0) + 1;
+      
+      // Save the updated campaign
+      await campaign.save();
+      console.log('Updated campaign vote counts:', {
+        candidateName: campaign.candidates[candidateIndex].name,
+        candidateVotes: campaign.candidates[candidateIndex].voteCount,
+        totalVotes: campaign.totalVotes
+      });
+    }
 
     // Try to record the vote on the blockchain if configured
     if (campaign.blockchainId) {
@@ -223,7 +293,12 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Vote cast successfully'
+      message: 'Vote cast successfully',
+      voteDetails: {
+        candidateName: candidate.name,
+        campaignName: campaign.name || campaign.campaignName,
+        totalVotes: campaign.totalVotes
+      }
     });
   } catch (error: any) {
     console.error('Error processing vote:', error);

@@ -9,15 +9,11 @@ export async function GET(
   try {
     await dbConnect();
     
-    console.log('Fetching campaigns for user ID:', params.userId);
-    
     // Get all campaigns for this user, regardless of status
     const campaigns = await Campaign.find({ createdBy: params.userId })
       .select('campaignName description startDate endDate isPublic totalVotes publicKey candidates blockchainId blockchainTxHash')
       .sort({ createdAt: -1 });
 
-    console.log(`Found ${campaigns.length} campaigns for user ${params.userId}`);
-    
     // Calculate current status for each campaign
     const currentDate = new Date();
     
@@ -52,7 +48,6 @@ export async function GET(
       };
     });
 
-    console.log('Returning mapped campaigns:', mappedCampaigns.length);
     return NextResponse.json(mappedCampaigns);
 
   } catch (error) {

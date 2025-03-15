@@ -58,6 +58,11 @@ export default function Navbar() {
                     Campaign Dashboard
                   </Link>
                 )}
+                {user.userType === 'admin' && (
+                  <Link href="/admin" className="btn btn-ghost">
+                    Admin Dashboard
+                  </Link>
+                )}
                 
                 {!isSignedIn ? (
                   // Logged in but no wallet connected

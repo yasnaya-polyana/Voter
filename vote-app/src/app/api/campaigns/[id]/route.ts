@@ -29,16 +29,19 @@ export async function GET(
     // Format the dates properly
     const formattedCampaign = {
       _id: campaign._id,
+      id: campaign._id, // Include both _id and id for compatibility
       campaignName: campaign.campaignName,
       description: campaign.description,
       isPublic: campaign.isPublic,
       publicKey: campaign.publicKey,
-      privateKey: campaign.privateKey,
+      // Only indicate if the campaign has a private key, but don't expose it
+      hasPrivateKey: !campaign.isPublic && !!campaign.privateKey,
       startDate: campaign.startDate.toISOString(),
       endDate: campaign.endDate.toISOString(),
       status: campaign.status,
       candidates: campaign.candidates.map((c, index) => ({ 
-        id: (index + 1).toString(),
+        id: c._id || (index + 1).toString(),
+        _id: c._id || (index + 1).toString(),
         name: c.name,
         description: c.description,
         voteCount: c.voteCount || 0

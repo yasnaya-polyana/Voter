@@ -2,11 +2,6 @@ import { NextResponse } from 'next/server';
 import dbConnect from '../../../../../lib/mongodb';
 import Campaign from '../../../../../models/Campaign';
 import mongoose from 'mongoose';
-import crypto from 'crypto';
-
-function hashPrivateKey(key: string): string {
-  return crypto.createHash('sha256').update(key).digest('hex');
-}
 
 export async function POST(
   request: Request,
@@ -14,14 +9,6 @@ export async function POST(
 ) {
   try {
     await dbConnect();
-    
-    const { privateKey } = await request.json();
-    
-    // Add debug logging
-    console.log('Verifying keys:', {
-      campaignId: params.id,
-      hasPrivateKey: !!privateKey
-    });
 
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
@@ -30,63 +17,51 @@ export async function POST(
       );
     }
 
-    // Find the campaign
+    const { privateKey } = await request.json();
+
+    if (!privateKey) {
+      return NextResponse.json(
+        { error: 'Private key is required', valid: false },
+        { status: 400 }
+      );
+    }
+
     const campaign = await Campaign.findById(params.id);
     
-    // Log campaign details (without exposing full keys)
-    console.log('Campaign found:', {
-      id: campaign?._id,
-      isPublic: campaign?.isPublic,
-      hasStoredPrivateKey: !!campaign?.privateKey
-    });
-
     if (!campaign) {
       return NextResponse.json(
-        { error: 'Campaign not found' },
+        { error: 'Campaign not found', valid: false },
         { status: 404 }
       );
     }
 
-    // For private campaigns, verify private key
-    if (!campaign.isPublic) {
-      if (!privateKey) {
-        return NextResponse.json(
-          { error: 'Private key required for private campaigns' },
-          { status: 400 }
-        );
-      }
-      
-      // Compare keys directly (case-insensitive)
-      console.log('Key comparison:', {
-        providedKey: privateKey.slice(-6),
-        storedKey: campaign.privateKey?.slice(-6)
-      });
-
-      if (campaign.privateKey?.toLowerCase() !== privateKey.toLowerCase()) {
-        return NextResponse.json(
-          { error: 'Invalid private key' },
-          { status: 400 }
-        );
-      }
+    // If campaign is public, no need for private key
+    if (campaign.isPublic) {
+      return NextResponse.json({ valid: true });
     }
 
-    // If we get here, the keys are valid
-    return NextResponse.json({
-      success: true,
-      message: 'Keys verified successfully',
-      campaign: {
-        id: campaign._id,
-        name: campaign.campaignName,
-        isPublic: campaign.isPublic,
-        status: campaign.status,
-        candidates: campaign.candidates
-      }
-    });
+    // If campaign is private but has no private key set
+    if (!campaign.privateKey) {
+      return NextResponse.json(
+        { error: 'This campaign is misconfigured (no private key set)', valid: false },
+        { status: 400 }
+      );
+    }
+
+    // Check if the provided private key matches
+    const isValid = campaign.privateKey.toLowerCase() === privateKey.toLowerCase();
+
+    if (!isValid) {
+      // For security, don't provide too much information about why it failed
+      return NextResponse.json({ valid: false });
+    }
+
+    return NextResponse.json({ valid: true });
 
   } catch (error) {
-    console.error('Error verifying keys:', error);
+    console.error('Error verifying private key:', error);
     return NextResponse.json(
-      { error: 'Failed to verify keys' },
+      { error: 'Failed to verify private key', valid: false },
       { status: 500 }
     );
   }

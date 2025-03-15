@@ -12,6 +12,7 @@ interface NearContextType {
   accountId: string | null;
   signIn: () => void;
   signOut: () => void;
+  loading: boolean;
 }
 
 const NearContext = createContext<NearContextType | null>(null);
@@ -20,28 +21,49 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<any>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     const setupNear = async () => {
-      const { wallet, connected, accountId } = await initNear();
-      setWallet(wallet);
-      setIsSignedIn(connected);
-      setAccountId(accountId);
+      setLoading(true);
+      try {
+        const { wallet, connected, accountId } = await initNear();
+        setWallet(wallet);
+        setIsSignedIn(connected);
+        setAccountId(accountId);
+        
+        // If user is signed in with NEAR and has a valid session, redirect to appropriate page
+        if (connected && user) {
+          const currentPath = window.location.pathname;
+          if (currentPath === '/login' || currentPath === '/') {
+            if (user.userType === 'voter') {
+              router.push('/voter');
+            } else if (user.userType === 'campaign') {
+              router.push('/campaign');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error setting up NEAR:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     setupNear();
-  }, []);
+  }, [user, router]);
 
   const signIn = () => {
     if (!wallet) return;
+    setLoading(true);
 
     // Get the redirect URL based on user type
     const getSuccessUrl = () => {
       if (!user) return `${window.location.origin}/login`;
       return user.userType === 'voter' 
-        ? `${window.location.origin}/voter/history`
+        ? `${window.location.origin}/voter`
         : `${window.location.origin}/campaign`;
     };
 
@@ -56,6 +78,7 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = () => {
     if (!wallet) return;
+    setLoading(true);
     wallet.signOut();
     setIsSignedIn(false);
     setAccountId(null);
@@ -68,10 +91,11 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
     } else {
       router.push('/');
     }
+    setLoading(false);
   };
 
   return (
-    <NearContext.Provider value={{ wallet, isSignedIn, accountId, signIn, signOut }}>
+    <NearContext.Provider value={{ wallet, isSignedIn, accountId, signIn, signOut, loading }}>
       {children}
     </NearContext.Provider>
   );

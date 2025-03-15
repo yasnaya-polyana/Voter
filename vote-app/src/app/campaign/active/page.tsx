@@ -19,7 +19,6 @@ interface Campaign {
   candidateCount?: number;
   blockchainId?: string;
   blockchainTxHash?: string;
-  createdBy: string;
 }
 
 const ActiveCampaignsPage = () => {
@@ -31,7 +30,7 @@ const ActiveCampaignsPage = () => {
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const response = await fetch('/api/campaigns/all');
+        const response = await fetch('/api/campaigns');
         if (!response.ok) throw new Error('Failed to fetch campaigns');
         const data = await response.json();
         
@@ -48,8 +47,7 @@ const ActiveCampaignsPage = () => {
           publicKey: campaign.publicKey,
           candidateCount: campaign.candidateCount || campaign.candidates?.length || 0,
           blockchainId: campaign.blockchainId,
-          blockchainTxHash: campaign.blockchainTxHash,
-          createdBy: campaign.createdBy
+          blockchainTxHash: campaign.blockchainTxHash
         }));
         
         setCampaigns(normalizedCampaigns);
@@ -159,7 +157,7 @@ const ActiveCampaignsPage = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">All Campaigns</h1>
+        <h1 className="text-3xl font-bold">Campaigns</h1>
         <div className="flex gap-2">
           <Link href="/campaign" className="btn btn-outline">
             Dashboard

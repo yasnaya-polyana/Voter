@@ -29,15 +29,14 @@ const VoterCampaignPage = () => {
         const data = await response.json();
         setCampaign(data);
         
-        // If campaign is private, don't allow direct access
+        // If campaign is private, redirect to vote page with isPrivate flag
         if (!data.isPublic) {
-          setError('This is a private campaign and requires a private key to access');
-          setLoading(false);
+          router.push(`/voter/vote?campaignId=${data.id || data._id}&isPrivate=true`);
           return;
         }
         
         // If campaign exists and is public, redirect to the vote page
-        router.push(`/voter/vote?campaignId=${data.id}`);
+        router.push(`/voter/vote?campaignId=${data.id || data._id}`);
       } catch (err) {
         console.error('Error fetching campaign:', err);
         setError(err.message || 'An error occurred');
@@ -54,7 +53,7 @@ const VoterCampaignPage = () => {
   const handleLogin = async () => {
     if (wallet) {
       // Store the return URL in localStorage
-      localStorage.setItem('returnUrl', `/voter/vote?campaignId=${campaign.id}`);
+      localStorage.setItem('returnUrl', `/voter/vote?campaignId=${campaign.id || campaign._id}`);
       
       // Redirect to NEAR wallet for login
       await wallet.signIn();

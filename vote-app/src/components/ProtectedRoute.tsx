@@ -35,8 +35,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-8">
+          {/* Skeleton for page content */}
+          <div className="space-y-6">
+            <div className="h-10 w-3/4 bg-base-200 animate-pulse rounded"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="h-64 bg-base-200 animate-pulse rounded-box"></div>
+              <div className="h-64 bg-base-200 animate-pulse rounded-box"></div>
+            </div>
+            <div className="h-40 bg-base-200 animate-pulse rounded-box"></div>
+          </div>
+        </div>
       </div>
     );
   }
