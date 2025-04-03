@@ -157,16 +157,16 @@ const CampaignPage: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Link href="/campaign/active" className="btn btn-primary btn-lg">
-          View Active Campaigns
-        </Link>
-        <Link href="/campaign/new" className="btn btn-secondary btn-lg">
-          Add New Campaign
-        </Link>
-        <Link href="/campaign/past" className="btn btn-outline btn-lg">
-          View Past Campaigns
-        </Link>
-      </div>
+          <Link href="/campaign/active" className="btn btn-primary btn-lg">
+            View Active Campaigns
+          </Link>
+          <Link href="/campaign/new" className="btn btn-secondary btn-lg">
+            Add New Campaign
+          </Link>
+          <Link href="/campaign/past" className="btn btn-outline btn-lg">
+            View Past Campaigns
+          </Link>
+        </div>
 
       {campaigns.length === 0 ? (
         <div className="card bg-base-100 shadow-xl">
@@ -382,9 +382,9 @@ const CampaignPage: React.FC = () => {
           )}
         </div>
       )}
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 const ProtectedCampaignPage = () => (
   <ProtectedRoute allowedUserTypes={['campaign']}>

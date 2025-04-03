@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useNear } from '@/context/NearContext';
+import { useAuth } from '@/context/AuthContext';
 import VoteInterface from '@/components/VoteInterface';
 import Link from 'next/link';
 
@@ -11,22 +12,32 @@ const VotePage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isSignedIn, wallet, signIn } = useNear();
+  const { user, isLoggedIn } = useAuth();
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [privateKey, setPrivateKey] = useState('');
   const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
   const [privateKeySubmitted, setPrivateKeySubmitted] = useState(false);
+  const [viewMode, setViewMode] = useState(false);
   
   // Get campaign ID from query parameters
   const campaignId = searchParams.get('campaignId');
   const isPrivate = searchParams.get('isPrivate') === 'true';
+
+  // Check if user can vote (must be logged in as a voter)
+  const canVote = isLoggedIn && user?.userType === 'voter';
 
   useEffect(() => {
     // If no campaign ID, redirect to voter dashboard
     if (!campaignId) {
       router.push('/voter');
       return;
+    }
+    
+    // Set view mode if user is not a voter
+    if (isLoggedIn && user?.userType !== 'voter') {
+      setViewMode(true);
     }
     
     const fetchCampaign = async () => {
@@ -55,7 +66,7 @@ const VotePage = () => {
     };
     
     fetchCampaign();
-  }, [campaignId, router, isPrivate]);
+  }, [campaignId, router, isPrivate, isLoggedIn, user]);
 
   const handlePrivateKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +120,7 @@ const VotePage = () => {
     if (campaignId) {
       localStorage.setItem('returnUrl', `/voter/vote?campaignId=${campaignId}`);
     }
-    signIn();
+    router.push('/login');
   };
 
   if (loading) {
@@ -188,8 +199,8 @@ const VotePage = () => {
     );
   }
 
-  // If user is not signed in, show campaign info and login button
-  if (!isSignedIn) {
+  // Show campaign info and view/login options based on user status
+  if (!canVote) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">{campaign.name || campaign.campaignName}</h1>
@@ -208,14 +219,25 @@ const VotePage = () => {
                 <p className="text-sm opacity-70">End Date:</p>
                 <p>{new Date(campaign.endDate).toLocaleDateString()}</p>
               </div>
+              <div>
+                <p className="text-sm opacity-70">Total Votes:</p>
+                <p>{campaign.totalVotes || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm opacity-70">Status:</p>
+                <p className="capitalize">{campaign.status}</p>
+              </div>
             </div>
             
             <h3 className="font-semibold mt-6 mb-2">Candidates:</h3>
-            <ul className="list-disc pl-5">
+            <ul className="space-y-3">
               {campaign.candidates && campaign.candidates.map((candidate: any) => (
-                <li key={candidate.id || candidate._id}>
-                  {candidate.name}
-                  {candidate.description && <span className="opacity-70"> - {candidate.description}</span>}
+                <li key={candidate.id || candidate._id} className="card bg-base-200 p-3">
+                  <div className="font-medium">{candidate.name}</div>
+                  {candidate.description && <div className="text-sm opacity-70">{candidate.description}</div>}
+                  <div className="text-sm mt-1">
+                    <span className="font-semibold">Votes:</span> {candidate.voteCount || 0}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -224,11 +246,26 @@ const VotePage = () => {
         
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">Login to Vote</h2>
-            <p className="mb-4">You need to login to cast your vote in this campaign.</p>
-            <button onClick={handleLogin} className="btn btn-primary">
-              Login with NEAR
-            </button>
+            {isLoggedIn ? (
+              <>
+                <h2 className="card-title justify-center">View Only Mode</h2>
+                <div className="alert alert-info mt-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span>You are logged in as a {user?.userType} account. Only voter accounts can cast votes.</span>
+                </div>
+                <Link href="/login" className="btn btn-primary mt-3">
+                  Login as Voter
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2 className="card-title justify-center">Login to Vote</h2>
+                <p className="mb-4">You need to login to a voter account to cast your vote in this campaign.</p>
+                <button onClick={handleLogin} className="btn btn-primary">
+                  Login as Voter
+                </button>
+              </>
+            )}
           </div>
         </div>
         

@@ -196,14 +196,54 @@ const VoteDetailsPage = ({ params }: { params: { id: string } }) => {
             <div>
               <h3 className="font-bold mb-2">Blockchain Transaction</h3>
               <div className="bg-base-200 p-3 rounded-lg">
+                <p className="mb-2 text-sm">Your vote has been recorded on the NEAR blockchain, making it immutable and verifiable.</p>
+                <div className="flex items-center space-x-2 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-success font-medium">Verified on Blockchain</span>
+                </div>
+                <code className="text-xs break-all block mb-2">{voteDetails.blockchainTxHash}</code>
                 <a 
                   href={`https://explorer.testnet.near.org/transactions/${voteDetails.blockchainTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="link link-primary text-xs break-all"
+                  className="btn btn-sm btn-outline mt-1"
                 >
-                  {voteDetails.blockchainTxHash}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View on NEAR Explorer
                 </a>
+              </div>
+            </div>
+          )}
+          
+          {!voteDetails.blockchainTxHash && (
+            <div>
+              <h3 className="font-bold mb-2">Blockchain Status</h3>
+              <div className="bg-base-200 p-3 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-warning font-medium">Pending Blockchain Verification</span>
+                </div>
+                <p className="mt-2 text-sm">Your vote has been recorded in our database, but has not yet been verified on the blockchain. This process can take a few minutes.</p>
+                <button 
+                  onClick={handleRefresh} 
+                  className="btn btn-sm btn-warning mt-2"
+                  disabled={refreshing}
+                >
+                  {refreshing ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs mr-1"></span>
+                      Checking Status...
+                    </>
+                  ) : (
+                    'Check Status'
+                  )}
+                </button>
               </div>
             </div>
           )}

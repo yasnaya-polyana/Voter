@@ -10,7 +10,7 @@ interface NearContextType {
   wallet: any;
   isSignedIn: boolean;
   accountId: string | null;
-  signIn: () => void;
+  signIn: (redirectUrl?: string) => void;
   signOut: () => void;
   loading: boolean;
 }
@@ -34,14 +34,23 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
         setIsSignedIn(connected);
         setAccountId(accountId);
         
-        // If user is signed in with NEAR and has a valid session, redirect to appropriate page
+        // If user is signed in with NEAR and has a valid session, redirect appropriately
         if (connected && user) {
-          const currentPath = window.location.pathname;
-          if (currentPath === '/login' || currentPath === '/') {
-            if (user.userType === 'voter') {
-              router.push('/voter');
-            } else if (user.userType === 'campaign') {
-              router.push('/campaign');
+          const returnUrl = localStorage.getItem('returnUrl');
+          if (returnUrl) {
+            localStorage.removeItem('returnUrl');
+            router.push(returnUrl);
+          } else {
+            // Handle standard redirects without using wallet-callback
+            const currentPath = window.location.pathname;
+            if (currentPath === '/login' || currentPath === '/' || currentPath === '/wallet-callback') {
+              if (user.userType === 'voter') {
+                router.push('/voter');
+              } else if (user.userType === 'campaign') {
+                router.push('/campaign');
+              } else if (user.userType === 'admin') {
+                router.push('/admin');
+              }
             }
           }
         }
@@ -55,24 +64,39 @@ export function NearProvider({ children }: { children: React.ReactNode }) {
     setupNear();
   }, [user, router]);
 
-  const signIn = () => {
-    if (!wallet) return;
-    setLoading(true);
+  const signIn = (redirectUrl?: string) => {
+    if (!wallet) {
+      console.error('NEAR wallet not initialized');
+      return;
+    }
+    
+    // Store the redirect URL if provided, otherwise use a default based on user type
+    if (redirectUrl) {
+      localStorage.setItem('returnUrl', redirectUrl);
+    } else if (user) {
+      const defaultUrl = user.userType === 'voter' 
+        ? '/voter'
+        : user.userType === 'campaign'
+        ? '/campaign'
+        : '/';
+      localStorage.setItem('returnUrl', defaultUrl);
+    }
 
-    // Get the redirect URL based on user type
-    const getSuccessUrl = () => {
-      if (!user) return `${window.location.origin}/login`;
-      return user.userType === 'voter' 
-        ? `${window.location.origin}/voter`
-        : `${window.location.origin}/campaign`;
-    };
+    // Only use the wallet-callback for blockchain operations
+    // For regular app usage, use direct URLs
+    const successUrl = `${window.location.origin}${user ? 
+      (user.userType === 'voter' ? '/voter' : 
+       user.userType === 'campaign' ? '/campaign' : 
+       '/') : '/login'}`;
+    
+    const failureUrl = `${window.location.origin}/login`;
 
     // Redirects to NEAR wallet to request full access
     wallet.requestSignIn({
       contractId: process.env.NEXT_PUBLIC_NEAR_CONTRACT_NAME,
       methodNames: ['create_campaign', 'cast_vote', 'get_campaign_results'],
-      successUrl: getSuccessUrl(),
-      failureUrl: `${window.location.origin}/login`,
+      successUrl,
+      failureUrl,
     });
   };
 

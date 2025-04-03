@@ -136,7 +136,7 @@ const AdminDashboard = () => {
         throw new Error('Failed to fix vote counts');
       }
       
-      const data = await response.json();
+          const data = await response.json();
       console.log('Vote counts fixed:', data);
       
       // Refresh the campaigns list
@@ -151,9 +151,9 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Error fixing vote counts:', err);
       alert('Failed to fix vote counts. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
+        } finally {
+          setLoading(false);
+        }
   };
 
   const handleViewUserDetails = async (userId: string) => {
@@ -283,12 +283,12 @@ const AdminDashboard = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="flex gap-2">
-          <Link href="/admin/create" className="btn btn-primary">
+        <Link href="/admin/create" className="btn btn-primary">
             Create Admin
           </Link>
           <Link href="/" className="btn btn-outline">
             Home
-          </Link>
+        </Link>
         </div>
       </div>
 
@@ -416,7 +416,7 @@ const AdminDashboard = () => {
               
               {/* Recent Activity */}
               <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
+              <div className="card-body">
                   <h3 className="card-title">Recent Activity</h3>
                   <div className="tabs">
                     <a className="tab tab-bordered tab-active">Recent Votes</a>
@@ -658,8 +658,8 @@ const AdminDashboard = () => {
                     </div>
                   )}
                 </div>
-              </div>
-            ) : (
+        </div>
+      ) : (
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                   <h3 className="card-title">User Details</h3>

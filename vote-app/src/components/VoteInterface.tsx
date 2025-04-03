@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNear } from '../context/NearContext';
 import { getContract } from '../lib/near-contract';
+import Link from 'next/link';
 
 interface VoteInterfaceProps {
   campaignId: string;
@@ -27,6 +28,7 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [formattedCandidates, setFormattedCandidates] = useState<any[]>([]);
+  const [blockchainTxHash, setBlockchainTxHash] = useState<string | null>(null);
 
   // Format candidates to ensure they have consistent ID properties
   useEffect(() => {
@@ -92,13 +94,18 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
         throw new Error(data.error || 'Failed to cast vote');
       }
       
+      // Check if we have a blockchain transaction hash
+      if (data.voteDetails && data.voteDetails.blockchainTxHash) {
+        setBlockchainTxHash(data.voteDetails.blockchainTxHash);
+      }
+      
       // Vote successful
       setVoteSuccess(true);
       
       // Redirect to history page after a short delay
       setTimeout(() => {
         router.push('/voter/history');
-      }, 2000);
+      }, 3000);
       
     } catch (error) {
       console.error('Error casting vote:', error);
@@ -115,7 +122,28 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
         <div className="text-success text-5xl mb-4">✓</div>
         <h2 className="text-2xl font-bold mb-4">Vote Cast Successfully!</h2>
         <p className="mb-6">Your vote has been recorded.</p>
-        <p>Redirecting to your voting history...</p>
+        
+        {blockchainTxHash ? (
+          <div className="bg-base-200 p-4 rounded-lg mb-4">
+            <p className="mb-2 font-semibold">Blockchain Transaction Recorded!</p>
+            <div className="text-xs break-all mb-2">{blockchainTxHash}</div>
+            <a 
+              href={`https://explorer.testnet.near.org/transactions/${blockchainTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-sm btn-outline mt-2"
+            >
+              View on NEAR Explorer
+            </a>
+          </div>
+        ) : (
+          <p className="text-warning">Blockchain transaction is being processed...</p>
+        )}
+        
+        <p className="mt-4">Redirecting to your voting history...</p>
+        <Link href="/voter/history" className="btn btn-primary mt-4">
+          Go to History
+        </Link>
       </div>
     );
   }
@@ -154,7 +182,10 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
                 <div className="card-body">
                   <h3 className="card-title">{candidate.name}</h3>
                   {candidate.description && <p>{candidate.description}</p>}
-                  <div className="card-actions justify-end">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      Current votes: <span className="font-bold">{candidate.voteCount || 0}</span>
+                    </div>
                     <button
                       className={`btn ${selectedCandidate === candidate.id ? 'btn-primary' : 'btn-outline'}`}
                       onClick={() => setSelectedCandidate(candidate.id)}
@@ -175,7 +206,10 @@ const VoteInterface: React.FC<VoteInterfaceProps> = ({
               disabled={loading}
             >
               {loading ? (
-                <span className="loading loading-spinner"></span>
+                <>
+                  <span className="loading loading-spinner loading-sm mr-2"></span>
+                  Submitting Vote...
+                </>
               ) : (
                 'Submit Vote'
               )}

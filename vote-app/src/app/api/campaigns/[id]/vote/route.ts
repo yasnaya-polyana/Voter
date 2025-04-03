@@ -23,7 +23,7 @@ export async function POST(
     const { 
       candidateId, 
       candidateName, 
-      candidateIndex, 
+      candidateIndex: candidateIndexParam, 
       publicKey, 
       privateKey, 
       voterAccountId 
@@ -33,7 +33,7 @@ export async function POST(
       campaignId: params.id,
       candidateId, 
       candidateName,
-      candidateIndex,
+      candidateIndex: candidateIndexParam,
       hasPrivateKey: !!privateKey, 
       voterAccountId,
       publicKey
@@ -128,9 +128,10 @@ export async function POST(
     }
     
     // If still not found, try by index
-    if (candidateIndex === -1 && typeof candidateIndex === 'number' && candidateIndex >= 0) {
-      if (candidateIndex < campaign.candidates.length) {
-        candidate = campaign.candidates[candidateIndex];
+    if (candidateIndex === -1 && typeof candidateIndexParam === 'number' && candidateIndexParam >= 0) {
+      if (candidateIndexParam < campaign.candidates.length) {
+        candidate = campaign.candidates[candidateIndexParam];
+        candidateIndex = candidateIndexParam;
       }
     }
     
@@ -245,8 +246,11 @@ export async function POST(
     }
 
     // Try to record the vote on the blockchain if configured
+    let blockchainTxHash = null;
     if (campaign.blockchainId) {
       try {
+        console.log('Attempting to record vote on blockchain');
+        
         // Get the key store with the account credentials
         const keyStore = await getServerKeyStore();
         
@@ -260,7 +264,7 @@ export async function POST(
         // Get the account
         const account = await near.account(serverNearConfig.accountId);
         
-        // Get the candidate name instead of ID
+        // Get the candidate name for the blockchain (smart contract uses name as ID)
         const candidateName = candidate.name;
         
         console.log('Casting vote on blockchain with args:', {
@@ -269,8 +273,8 @@ export async function POST(
           public_key: publicKey
         });
         
-        // Cast the vote on the blockchain
-        await account.functionCall({
+        // Cast the vote on the blockchain and capture the transaction result
+        const result = await account.functionCall({
           contractId: serverNearConfig.contractName,
           methodName: 'cast_vote',
           args: {
@@ -282,7 +286,20 @@ export async function POST(
           attachedDeposit: serverNearConfig.attachedDeposit
         });
         
-        console.log('Vote cast on blockchain successfully');
+        // Extract the transaction hash from the result
+        blockchainTxHash = result.transaction_outcome.id;
+        
+        console.log('Vote cast on blockchain successfully with transaction hash:', blockchainTxHash);
+        
+        // Update the vote with the blockchain transaction hash
+        vote.blockchainTxHash = blockchainTxHash;
+        vote.status = 'verified';
+        await vote.save();
+        
+        // Update the campaign with the latest transaction hash
+        campaign.blockchainTxHash = blockchainTxHash;
+        await campaign.save();
+        
       } catch (blockchainError) {
         console.error('Error casting vote on blockchain:', blockchainError);
         // Continue even if blockchain vote fails - we've already saved to our database
@@ -297,7 +314,8 @@ export async function POST(
       voteDetails: {
         candidateName: candidate.name,
         campaignName: campaign.name || campaign.campaignName,
-        totalVotes: campaign.totalVotes
+        totalVotes: campaign.totalVotes,
+        blockchainTxHash
       }
     });
   } catch (error: any) {
