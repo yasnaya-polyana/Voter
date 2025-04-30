@@ -2,7 +2,7 @@
 
 Secure, transparent, and decentralized voting powered by blockchain technology.
 
-![Project Screenshot](vote-app/public/images/frontImage.png)
+![Project Screenshot](vote-app/public/frontImage.png)
 
 ## Overview
 
