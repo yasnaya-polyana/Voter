@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:14
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-voter}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - voter_network
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    ports:
+      - "8888:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - voter_network
+
+networks:
+  voter_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data: 
